@@ -1,0 +1,6 @@
+credentials.json
+db/
+*.png
+*.docx
+.DS_Store
+Thumbs.db
