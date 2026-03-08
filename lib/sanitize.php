@@ -36,9 +36,16 @@ function process_node($node, $allowed_tags)
     }
     $attrs = '';
     if ($tag === 'a' && $node->hasAttributes()) {
-        $href = $node->getAttribute('href');
-        $href = trim($href);
-        if (filter_var($href, FILTER_VALIDATE_URL) || strpos($href, '/') === 0) {
+        $href = trim($node->getAttribute('href'));
+        $allowedProtocols = ['http://', 'https://', 'mailto:', 'tel:', '/'];
+        $isValid = false;
+        foreach ($allowedProtocols as $proto) {
+            if (stripos($href, $proto) === 0) {
+                $isValid = true;
+                break;
+            }
+        }
+        if ($isValid) {
             $attrs = ' href="' . htmlspecialchars($href, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') . '" rel="noopener noreferrer"';
         }
     }
