@@ -139,6 +139,77 @@ function message_status(array $m, DateTimeImmutable $now): string
   .modal-close { position: absolute; top: 1rem; right: 1rem; cursor: pointer; font-size: 1.5rem; color: #9ca3af; border: none; background: none; }
   .modal-close:hover { color: #374151; }
   @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+
+  /* Live Dashboard Preview */
+  .live-preview-card {
+    background: linear-gradient(135deg, #667eea11 0%, #764ba211 100%);
+    border: 2px solid #667eea33;
+    border-radius: 12px;
+    padding: 1.2rem;
+    margin-bottom: 0.5rem;
+    position: relative;
+    overflow: hidden;
+  }
+  .live-preview-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.8rem;
+  }
+  .live-preview-title {
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: #667eea;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  .live-preview-status {
+    font-size: 0.7rem;
+    font-weight: 600;
+    padding: 0.15rem 0.5rem;
+    border-radius: 100px;
+    background: #fff;
+    border: 1px solid #667eea33;
+    color: #667eea;
+  }
+  .live-preview-content {
+    background: #fff;
+    border-radius: 8px;
+    padding: 1rem;
+    font-size: 0.9rem;
+    line-height: 1.4;
+    color: #374151;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    max-height: 120px;
+    overflow-y: auto;
+  }
+  .live-preview-content strong { color: #667eea; }
+  .refresh-indicator {
+    position: absolute;
+    bottom: 0.5rem;
+    right: 0.8rem;
+    font-size: 0.65rem;
+    color: #9ca3af;
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+  }
+  .refresh-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #10b981;
+    opacity: 0.5;
+  }
+  .refreshing .refresh-dot {
+    animation: pulse 1s infinite;
+    background: #667eea;
+    opacity: 1;
+  }
+
 </style>
 </head>
 <body>
@@ -147,6 +218,24 @@ function message_status(array $m, DateTimeImmutable $now): string
   <a href="logout.php">Abmelden</a>
 </header>
 <main>
+  
+  <!-- Permanente Live-Vorschau der aktuellen Meldung -->
+  <div class="live-preview-card" id="live-dashboard-preview">
+    <div class="live-preview-header">
+      <div class="live-preview-title">
+        <span class="refresh-dot"></span>
+        Aktuelle öffentliche Meldung
+      </div>
+      <div id="live-preview-status" class="live-preview-status">Wird geladen...</div>
+    </div>
+    <div id="live-preview-render" class="live-preview-content">
+      <div style="color:#9ca3af; font-style:italic">Lade aktuelle Meldung...</div>
+    </div>
+    <div class="refresh-indicator">
+      Automatische Aktualisierung aktiv
+    </div>
+  </div>
+
 
   <!-- Statistiken -->
   <div class="card">
@@ -302,7 +391,43 @@ function message_status(array $m, DateTimeImmutable $now): string
 
 <script>
 document.addEventListener('DOMContentLoaded', () => {
+    // Live Dashboard Preview Logic
+    const livePreviewRender = document.getElementById('live-preview-render');
+    const livePreviewStatus = document.getElementById('live-preview-status');
+    const livePreviewCard = document.getElementById('live-dashboard-preview');
+
+    async function updateLivePreview() {
+        livePreviewCard.classList.add('refreshing');
+        try {
+            const resp = await fetch('get_current_message.php');
+            if (resp.ok) {
+                const data = await resp.json();
+                livePreviewRender.innerHTML = data.content_html;
+                livePreviewStatus.textContent = data.title + (data.is_default ? ' (Standard)' : ' (Aktiv)');
+                
+                // Status color based on is_default
+                if (data.is_default) {
+                    livePreviewStatus.style.borderColor = '#9ca3af33';
+                    livePreviewStatus.style.color = '#6b7280';
+                } else {
+                    livePreviewStatus.style.borderColor = '#667eea33';
+                    livePreviewStatus.style.color = '#667eea';
+                }
+            }
+        } catch (e) {
+            console.error("Live preview update failed", e);
+        } finally {
+            setTimeout(() => livePreviewCard.classList.remove('refreshing'), 500);
+        }
+    }
+
+    // Initial load
+    updateLivePreview();
+    // Auto refresh every 30 seconds
+    setInterval(updateLivePreview, 30000);
+
     const textarea = document.getElementById('msg-content');
+
     const preview = document.getElementById('preview-render');
     
     if (textarea && preview) {

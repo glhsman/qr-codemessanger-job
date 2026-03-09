@@ -4,9 +4,9 @@ Ein PHP-basiertes System zur schnellen Kommunikation via QR-Code. Besucher scann
 
 ## Features
 
-- **QR-Code Scanning**: Einfaches Scannen führt direkt zur aktuellen Nachricht.
+- **QR-Code Scanning**: Einfaches Scannen führt direkt zur aktuellen Nachricht (klares, minimalistisches Design ohne störende Icons).
 - **Zeitgesteuerte Nachrichten**: Nachrichten können für bestimmte Zeiträume oder Wochentage geplant werden.
-- **Admin-Panel**: Komfortable Verwaltung der Nachrichten und Einstellungen über einen geschützten Bereich.
+- **Admin-Panel mit Live-Vorschau**: Komfortable Verwaltung der Nachrichten und Einstellungen über einen geschützten Bereich inklusive permanenter Live-Vorschau der aktuell aktiven Nachricht.
 - **Besucher-Statistik**: Logging von Scans (anonymisierte IP, User-Agent, Referrer) zur Analyse der Nutzung.
 - **Sicherheit**: Trennung von Konfiguration und sensiblen Zugangsdaten (`credentials.json`).
 

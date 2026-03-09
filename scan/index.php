@@ -50,30 +50,7 @@ header('Cache-Control: no-cache, max-age=60');
     animation: slideUp 0.6s ease-out both;
   }
 
-  /* Logo / Icon */
-  .logo-wrap {
-    display: flex;
-    justify-content: center;
-    margin-bottom: 1.8rem;
-  }
 
-  .logo {
-    width: 72px;
-    height: 72px;
-    background: rgba(255,255,255,0.2);
-    backdrop-filter: blur(10px);
-    border: 2px solid rgba(255,255,255,0.35);
-    border-radius: 20px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    box-shadow: 0 8px 32px rgba(0,0,0,0.15);
-  }
-
-  .logo svg {
-    width: 38px;
-    height: 38px;
-  }
 
   /* Card */
   .card {
@@ -168,17 +145,7 @@ header('Cache-Control: no-cache, max-age=60');
 <body>
 <div class="container">
 
-  <div class="logo-wrap">
-    <div class="logo">
-      <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <rect x="18" y="18" width="22" height="22" rx="4" fill="white"/>
-        <rect x="60" y="18" width="22" height="22" rx="4" fill="white"/>
-        <rect x="18" y="60" width="22" height="22" rx="4" fill="white"/>
-        <rect x="44" y="44" width="12" height="12" rx="2" fill="white" opacity="0.7"/>
-        <rect x="60" y="60" width="22" height="22" rx="4" fill="white"/>
-      </svg>
-    </div>
-  </div>
+
 
   <div class="card">
     <div class="card-header">
