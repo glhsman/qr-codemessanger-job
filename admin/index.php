@@ -33,9 +33,27 @@ function message_status(array $m, DateTimeImmutable $now): string
     if ($m['active_from'] && $m['active_until']) {
         $from  = new DateTimeImmutable($m['active_from']);
         $until = new DateTimeImmutable($m['active_until']);
-        if ($now >= $from && $now <= $until) return 'active';
+        if ($now >= $from && $now <= $until) {
+            if ($m['daily_start'] && $m['daily_end']) {
+                $time = $now->format('H:i:s');
+                if (($m['daily_start'] <= $m['daily_end'] && $time >= $m['daily_start'] && $time <= $m['daily_end']) ||
+                    ($m['daily_start'] > $m['daily_end'] && ($time >= $m['daily_start'] || $time <= $m['daily_end']))) {
+                    return 'active';
+                }
+                return 'scheduled';
+            }
+            return 'active';
+        }
         if ($now < $from) return 'scheduled';
         return 'expired';
+    }
+    if ($m['daily_start'] && $m['daily_end']) {
+        $time = $now->format('H:i:s');
+        if (($m['daily_start'] <= $m['daily_end'] && $time >= $m['daily_start'] && $time <= $m['daily_end']) ||
+            ($m['daily_start'] > $m['daily_end'] && ($time >= $m['daily_start'] || $time <= $m['daily_end']))) {
+            return 'active';
+        }
+        return 'scheduled';
     }
     return 'inactive';
 }
@@ -81,7 +99,7 @@ function message_status(array $m, DateTimeImmutable $now): string
 
   /* Formular */
   form label { display: block; font-size: .85rem; font-weight: 500; color: #374151; margin-bottom: .3rem; }
-  form input[type=text], form input[type=datetime-local], form textarea {
+  form input[type=text], form input[type=datetime-local], form input[type=time], form textarea {
     width: 100%; padding: .5rem .75rem; border: 1px solid #d1d5db; border-radius: 8px;
     font-size: .9rem; font-family: inherit; margin-bottom: .9rem; background: #f9fafb;
     transition: border-color .15s;
@@ -89,7 +107,7 @@ function message_status(array $m, DateTimeImmutable $now): string
   form input:focus, form textarea:focus { outline: none; border-color: #667eea; background: #fff; }
   form textarea { height: 140px; resize: vertical; }
   .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
-  .hint { font-size: .75rem; color: #6b7280; margin-top: -.6rem; margin-bottom: .9rem; }
+  .hint { font-size: .75rem; color: #6b7280; margin-bottom: .9rem; }
   .btn-primary { padding: .55rem 1.2rem; background: linear-gradient(135deg,#667eea,#764ba2); color: #fff; border: none; border-radius: 8px; font-weight: 600; font-size: .9rem; cursor: pointer; }
   .btn-primary:hover { opacity: .9; }
   .btn-cancel  { padding: .55rem 1rem; color: #6b7280; background: none; border: 1px solid #d1d5db; border-radius: 8px; font-size: .9rem; cursor: pointer; text-decoration: none; display: inline-block; margin-left: .5rem; }
@@ -269,6 +287,9 @@ function message_status(array $m, DateTimeImmutable $now): string
             <?= date('d.m.Y H:i', strtotime($m['active_from'])) ?> –<br>
             <?= date('d.m.Y H:i', strtotime($m['active_until'])) ?>
           <?php else: echo '—'; endif; ?>
+          <?php if ($m['daily_start'] && $m['daily_end']): ?>
+            <br><span style="color:#667eea">Täglich: <?= substr($m['daily_start'], 0, 5) ?> – <?= substr($m['daily_end'], 0, 5) ?></span>
+          <?php endif; ?>
         </td>
         <td>
           <button class="act-btn btn-edit" style="border-color:#d1d5db;color:#374151" 
@@ -346,7 +367,20 @@ function message_status(array $m, DateTimeImmutable $now): string
                  value="<?= $editing && $editing['active_until'] ? date('Y-m-d\TH:i', strtotime($editing['active_until'])) : '' ?>">
         </div>
       </div>
-      <p class="hint">Ohne Zeitraum: Meldung ist inaktiv, bis Sie sie als Standard setzen.</p>
+      
+      <div class="form-row">
+        <div>
+          <label>Täglich von (optional)</label>
+          <input type="time" name="daily_start"
+                 value="<?= $editing && $editing['daily_start'] ? substr($editing['daily_start'], 0, 5) : '' ?>">
+        </div>
+        <div>
+          <label>Täglich bis (optional)</label>
+          <input type="time" name="daily_end"
+                 value="<?= $editing && $editing['daily_end'] ? substr($editing['daily_end'], 0, 5) : '' ?>">
+        </div>
+      </div>
+      <p class="hint">Zeitraum und tägliche Zeit können kombiniert werden. Ohne Zeitangabe ist die Meldung inaktiv, bis man sie als Standard setzt.</p>
 
       <button class="btn-primary" type="submit"><?= $editing ? 'Speichern' : 'Hinzufügen' ?></button>
       <?php if ($editing): ?>

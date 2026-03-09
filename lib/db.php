@@ -44,10 +44,20 @@ function ensure_schema(): void
       `content` TEXT NOT NULL,
       `active_from` DATETIME DEFAULT NULL,
       `active_until` DATETIME DEFAULT NULL,
+      `daily_start` TIME DEFAULT NULL,
+      `daily_end` TIME DEFAULT NULL,
       `is_default` TINYINT(1) NOT NULL DEFAULT 0,
       `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
       PRIMARY KEY (`id`)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
+    // Migration: neue Spalten hinzufügen falls sie fehlen
+    try {
+        $pdo->exec("ALTER TABLE `messages` ADD COLUMN `daily_start` TIME DEFAULT NULL AFTER `active_until`, ADD COLUMN `daily_end` TIME DEFAULT NULL AFTER `daily_start` ");
+    }
+    catch (Exception $e) {
+    // Spalten existieren wohl schon
+    }
 
     // Migration: bestehende landing_message aus settings als Default übernehmen
     $stmt = $pdo->query("SELECT COUNT(*) as cnt FROM `messages`");
@@ -68,11 +78,20 @@ function get_active_message(): string
     // 1. Zeitgesteuerte Meldung: active_from <= NOW() <= active_until
     $stmt = $pdo->prepare(
         "SELECT `content` FROM `messages`
-         WHERE `active_from` IS NOT NULL
-           AND `active_until` IS NOT NULL
-           AND `active_from` <= NOW()
-           AND `active_until` >= NOW()
-         ORDER BY `active_from` DESC
+         WHERE (`active_from` IS NULL OR `active_from` <= NOW())
+           AND (`active_until` IS NULL OR `active_until` >= NOW())
+           AND (
+             (`daily_start` IS NULL OR `daily_end` IS NULL)
+             OR
+             (
+               (`daily_start` <= `daily_end` AND CURTIME() BETWEEN `daily_start` AND `daily_end`)
+               OR
+               (`daily_start` > `daily_end` AND (CURTIME() >= `daily_start` OR CURTIME() <= `daily_end`))
+             )
+           )
+           AND `is_default` = 0
+           AND (`active_from` IS NOT NULL OR `daily_start` IS NOT NULL)
+         ORDER BY `active_from` DESC, `id` DESC
          LIMIT 1"
     );
     $stmt->execute();
@@ -96,7 +115,7 @@ function get_all_messages(): array
 {
     $pdo = get_pdo();
     return $pdo->query(
-        "SELECT id, title, content, active_from, active_until, is_default, created_at
+        "SELECT id, title, content, active_from, active_until, daily_start, daily_end, is_default, created_at
          FROM `messages` ORDER BY is_default DESC, created_at DESC"
     )->fetchAll();
 }
@@ -110,21 +129,28 @@ function get_message(int $id): ?array
     return $row ?: null;
 }
 
-function upsert_message(int $id, string $title, string $content, ?string $activeFrom, ?string $activeUntil): void
+function upsert_message(int $id, string $title, string $content, ?string $activeFrom, ?string $activeUntil, ?string $dailyStart = null, ?string $dailyEnd = null): void
 {
     $pdo = get_pdo();
     $stmt = null;
-    $params = [':t' => $title, ':c' => $content, ':af' => $activeFrom ?: null, ':au' => $activeUntil ?: null];
+    $params = [
+        ':t' => $title,
+        ':c' => $content,
+        ':af' => $activeFrom ?: null,
+        ':au' => $activeUntil ?: null,
+        ':ds' => $dailyStart ?: null,
+        ':de' => $dailyEnd ?: null
+    ];
 
     if ($id === 0) {
         $stmt = $pdo->prepare(
-            "INSERT INTO `messages` (`title`, `content`, `active_from`, `active_until`)
-             VALUES (:t, :c, :af, :au)"
+            "INSERT INTO `messages` (`title`, `content`, `active_from`, `active_until`, `daily_start`, `daily_end`)
+             VALUES (:t, :c, :af, :au, :ds, :de)"
         );
     }
     else {
         $stmt = $pdo->prepare(
-            "UPDATE `messages` SET `title`=:t, `content`=:c, `active_from`=:af, `active_until`=:au
+            "UPDATE `messages` SET `title`=:t, `content`=:c, `active_from`=:af, `active_until`=:au, `daily_start`=:ds, `daily_end`=:de
              WHERE `id`=:id"
         );
         $params[':id'] = $id;

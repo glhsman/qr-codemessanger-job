@@ -25,8 +25,10 @@ switch ($action) {
         $content = trim($_POST['content'] ?? '');
         $from = trim($_POST['active_from'] ?? '');
         $until = trim($_POST['active_until'] ?? '');
+        $daily_start = trim($_POST['daily_start'] ?? '');
+        $daily_end = trim($_POST['daily_end'] ?? '');
         if ($title && $content) {
-            upsert_message(0, $title, $content, $from ?: null, $until ?: null);
+            upsert_message(0, $title, $content, $from ?: null, $until ?: null, $daily_start ?: null, $daily_end ?: null);
         }
         header('Location: ' . BASE_URL . '/admin/');
         break;
@@ -36,8 +38,10 @@ switch ($action) {
         $content = trim($_POST['content'] ?? '');
         $from = trim($_POST['active_from'] ?? '');
         $until = trim($_POST['active_until'] ?? '');
+        $daily_start = trim($_POST['daily_start'] ?? '');
+        $daily_end = trim($_POST['daily_end'] ?? '');
         if ($id && $title && $content) {
-            upsert_message($id, $title, $content, $from ?: null, $until ?: null);
+            upsert_message($id, $title, $content, $from ?: null, $until ?: null, $daily_start ?: null, $daily_end ?: null);
         }
         header('Location: ' . BASE_URL . '/admin/');
         break;
