@@ -24,6 +24,10 @@ $total_scans  = count_all_scans();
 $today_scans  = count_today_scans();
 $recent_scans = get_recent_scans(50);
 
+$import_error = $_SESSION['import_error'] ?? null;
+$import_success = $_SESSION['import_success'] ?? null;
+unset($_SESSION['import_error'], $_SESSION['import_success']);
+
 // Aktuelle Zeit für Status-Anzeige
 $now = new DateTimeImmutable('now');
 
@@ -267,7 +271,28 @@ function message_status(array $m, DateTimeImmutable $now): string
 
   <!-- Meldungsverwaltung -->
   <div class="card">
-    <h2>Meldungen verwalten</h2>
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 1rem; border-bottom: 1px solid #e5e7eb; padding-bottom: .5rem;">
+      <h2 style="margin-bottom:0; border-bottom:0; padding-bottom:0;">Meldungen verwalten</h2>
+      <div style="display:flex; gap:0.5rem;">
+        <a href="export_messages.php" class="act-btn btn-edit" style="text-decoration:none; display:flex; align-items:center; gap:0.3rem;">
+          📥 Export (JSON)
+        </a>
+        <button onclick="document.getElementById('import-form').style.display='flex'" class="act-btn btn-edit" style="display:flex; align-items:center; gap:0.3rem;">
+          📤 Import
+        </button>
+      </div>
+    </div>
+
+    <?php if ($import_error): ?>
+      <div style="background:#fee2e2; border:1px solid #fecaca; color:#b91c1c; padding:.75rem 1rem; border-radius:8px; margin-bottom:1rem; font-size:.85rem;">
+        ❌ <?= htmlspecialchars($import_error) ?>
+      </div>
+    <?php endif; ?>
+    <?php if ($import_success): ?>
+      <div style="background:#d1fae5; border:1px solid #a7f3d0; color:#065f46; padding:.75rem 1rem; border-radius:8px; margin-bottom:1rem; font-size:.85rem;">
+        ✅ <?= htmlspecialchars($import_success) ?>
+      </div>
+    <?php endif; ?>
     <?php if (!empty($messages)): ?>
     <table class="msg-table">
       <thead><tr><th>Titel</th><th>Status</th><th>Zeitraum</th><th>Aktionen</th></tr></thead>
@@ -418,6 +443,26 @@ function message_status(array $m, DateTimeImmutable $now): string
         <div id="modal-content-render"></div>
       </div>
       <button class="btn-primary" style="width:100%;margin-top:1rem" onclick="closePreview()">Schließen</button>
+    </div>
+  </div>
+
+  <!-- Modal für Import -->
+  <div id="import-form" class="modal-overlay" onclick="if(event.target==this) this.style.display='none'">
+    <div class="modal-card">
+      <button class="modal-close" onclick="document.getElementById('import-form').style.display='none'">&times;</button>
+      <h2 style="margin-bottom:1.5rem;border:none">Meldungen importieren</h2>
+      <p style="font-size: .85rem; color: #6b7280; margin-bottom: 1.5rem;">
+        Wählen Sie eine JSON-Exportdatei aus, um Meldungen hinzuzufügen. Bestehende Meldungen bleiben erhalten.
+      </p>
+      <form method="post" action="import_messages.php" enctype="multipart/form-data">
+        <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrf) ?>">
+        <label>Datei auswählen (.json)</label>
+        <input type="file" name="import_file" accept=".json" required style="margin-bottom: 1.5rem; display: block; width: 100%; padding: .5rem; border: 1px solid #d1d5db; border-radius: 8px;">
+        <div style="display:flex; gap:0.5rem;">
+          <button class="btn-primary" style="flex:1" type="submit">Importieren</button>
+          <button type="button" class="btn-cancel" style="flex:1" onclick="document.getElementById('import-form').style.display='none'">Abbrechen</button>
+        </div>
+      </form>
     </div>
   </div>
 
