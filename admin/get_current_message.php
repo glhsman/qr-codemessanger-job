@@ -19,7 +19,7 @@ $pdo = get_pdo();
 
 // 1. Zeitgesteuerte Meldung
 $stmt = $pdo->prepare(
-    "SELECT id, title, content, active_from, active_until, daily_start, daily_end, is_default 
+    "SELECT id, title, content, active_from, active_until, daily_start, daily_end, active_days, is_default 
      FROM `messages`
      WHERE (`active_from` IS NULL OR `active_from` <= NOW())
        AND (`active_until` IS NULL OR `active_until` >= NOW())
@@ -32,8 +32,18 @@ $stmt = $pdo->prepare(
            (`daily_start` > `daily_end` AND (CURTIME() >= `daily_start` OR CURTIME() <= `daily_end`))
          )
        )
+       AND (
+         `active_days` IS NULL
+         OR `active_days` = ''
+         OR FIND_IN_SET(WEEKDAY(NOW()) + 1, `active_days`) > 0
+         OR (
+           `daily_start` > `daily_end`
+           AND CURTIME() <= `daily_end`
+           AND FIND_IN_SET((WEEKDAY(NOW()) + 6) % 7 + 1, `active_days`) > 0
+         )
+       )
        AND `is_default` = 0
-       AND (`active_from` IS NOT NULL OR `daily_start` IS NOT NULL)
+       AND (`active_from` IS NOT NULL OR `daily_start` IS NOT NULL OR (`active_days` IS NOT NULL AND `active_days` != ''))
      ORDER BY `active_from` DESC, `id` DESC
      LIMIT 1"
 );

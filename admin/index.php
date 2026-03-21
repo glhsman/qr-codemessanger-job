@@ -34,10 +34,33 @@ $now = new DateTimeImmutable('now');
 function message_status(array $m, DateTimeImmutable $now): string
 {
     if ($m['is_default']) return 'standard';
+
+    $daysMatch = true;
+    if (!empty($m['active_days'])) {
+        $currentDay = (int)$now->format('N'); // 1=Mo, 7=So
+        $activeDays = explode(',', $m['active_days']);
+        
+        $matchToday = in_array((string)$currentDay, $activeDays);
+        $matchYesterday = false;
+        
+        if ($m['daily_start'] && $m['daily_end'] && $m['daily_start'] > $m['daily_end']) {
+            $time = $now->format('H:i:s');
+            if ($time <= $m['daily_end']) {
+                $yesterday = ($currentDay == 1) ? 7 : $currentDay - 1;
+                $matchYesterday = in_array((string)$yesterday, $activeDays);
+            }
+        }
+        
+        if (!$matchToday && !$matchYesterday) {
+            $daysMatch = false;
+        }
+    }
+
     if ($m['active_from'] && $m['active_until']) {
         $from  = new DateTimeImmutable($m['active_from']);
         $until = new DateTimeImmutable($m['active_until']);
         if ($now >= $from && $now <= $until) {
+            if (!$daysMatch) return 'scheduled';
             if ($m['daily_start'] && $m['daily_end']) {
                 $time = $now->format('H:i:s');
                 if (($m['daily_start'] <= $m['daily_end'] && $time >= $m['daily_start'] && $time <= $m['daily_end']) ||
@@ -52,6 +75,7 @@ function message_status(array $m, DateTimeImmutable $now): string
         return 'expired';
     }
     if ($m['daily_start'] && $m['daily_end']) {
+        if (!$daysMatch) return 'scheduled';
         $time = $now->format('H:i:s');
         if (($m['daily_start'] <= $m['daily_end'] && $time >= $m['daily_start'] && $time <= $m['daily_end']) ||
             ($m['daily_start'] > $m['daily_end'] && ($time >= $m['daily_start'] || $time <= $m['daily_end']))) {
@@ -59,8 +83,14 @@ function message_status(array $m, DateTimeImmutable $now): string
         }
         return 'scheduled';
     }
+    
+    if (!empty($m['active_days'])) {
+        return $daysMatch ? 'active' : 'scheduled';
+    }
+
     return 'inactive';
 }
+$wochentageNames = [1=>'Mo', 2=>'Di', 3=>'Mi', 4=>'Do', 5=>'Fr', 6=>'Sa', 7=>'So'];
 ?><!doctype html>
 <html lang="de">
 <head>
@@ -315,6 +345,15 @@ function message_status(array $m, DateTimeImmutable $now): string
           <?php if ($m['daily_start'] && $m['daily_end']): ?>
             <br><span style="color:#667eea">Täglich: <?= substr($m['daily_start'], 0, 5) ?> – <?= substr($m['daily_end'], 0, 5) ?></span>
           <?php endif; ?>
+          <?php if (!empty($m['active_days'])): ?>
+            <br><span style="color:#764ba2">Tage: 
+            <?php
+            $days = explode(',', $m['active_days']);
+            $dayNames = array_map(fn($d) => $wochentageNames[$d] ?? '', $days);
+            echo implode(', ', $dayNames);
+            ?>
+            </span>
+          <?php endif; ?>
         </td>
         <td>
           <button class="act-btn btn-edit" style="border-color:#d1d5db;color:#374151" 
@@ -405,7 +444,29 @@ function message_status(array $m, DateTimeImmutable $now): string
                  value="<?= $editing && $editing['daily_end'] ? substr($editing['daily_end'], 0, 5) : '' ?>">
         </div>
       </div>
-      <p class="hint">Zeitraum und tägliche Zeit können kombiniert werden. Ohne Zeitangabe ist die Meldung inaktiv, bis man sie als Standard setzt.</p>
+      
+      <div style="margin-bottom: 1rem;">
+        <label>An Wochentagen (optional)</label>
+        <?php 
+        $selDays = $editing && $editing['active_days'] ? explode(',', $editing['active_days']) : [];
+        ?>
+        <div style="display:flex; gap:0.5rem; flex-wrap:wrap; margin-bottom: 0.5rem;">
+          <?php foreach([1=>'Mo', 2=>'Di', 3=>'Mi', 4=>'Do', 5=>'Fr', 6=>'Sa', 7=>'So'] as $dVal => $dName): ?>
+            <label style="display:inline-flex; align-items:center; background:#f9fafb; padding:0.4rem 0.6rem; border-radius:6px; border:1px solid #d1d5db; font-size:.85rem; font-weight:normal; margin-bottom:0; cursor:pointer;">
+              <input type="checkbox" name="active_days[]" value="<?= $dVal ?>" <?= in_array((string)$dVal, $selDays) ? 'checked' : '' ?> class="day-cb" style="margin-right:0.3rem;">
+              <?= $dName ?>
+            </label>
+          <?php endforeach; ?>
+        </div>
+        <div style="display:flex; gap:0.5rem;">
+          <button type="button" class="act-btn btn-std" onclick="checkDays([1,2,3,4,5])">Mo-Fr</button>
+          <button type="button" class="act-btn btn-std" onclick="checkDays([6,7])">Sa+So</button>
+          <button type="button" class="act-btn btn-std" onclick="checkDays([1,2,3,4,5,6,7])">Jeden Tag</button>
+          <button type="button" class="act-btn btn-cancel" style="margin-left:0; border-color:#d1d5db; padding:0.25rem 0.6rem;" onclick="checkDays([])">Aufheben</button>
+        </div>
+      </div>
+
+      <p class="hint">Zeitraum, tägliche Zeit und Wochentage können kombiniert werden. Ohne diese Optionen ist die Meldung inaktiv, bis man sie als Standard setzt.</p>
 
       <button class="btn-primary" type="submit"><?= $editing ? 'Speichern' : 'Hinzufügen' ?></button>
       <?php if ($editing): ?>
@@ -560,6 +621,12 @@ function openPreview(btn) {
 
 function closePreview() {
     document.getElementById('preview-modal').style.display = 'none';
+}
+
+function checkDays(daysArray) {
+    document.querySelectorAll('.day-cb').forEach(cb => {
+        cb.checked = daysArray.includes(parseInt(cb.value));
+    });
 }
 </script>
 </body>
