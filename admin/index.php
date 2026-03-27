@@ -94,440 +94,397 @@ $wochentageNames = [1=>'Mo', 2=>'Di', 3=>'Mi', 4=>'Do', 5=>'Fr', 6=>'Sa', 7=>'So
 ?><!doctype html>
 <html lang="de">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Admin – QR-Meldungen</title>
-<style>
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: system-ui, -apple-system, Segoe UI, sans-serif; background: #f3f4f6; color: #1f2937; min-height: 100vh; }
-  header { background: linear-gradient(135deg,#667eea,#764ba2); color: #fff; padding: 1rem 1.5rem; display: flex; justify-content: space-between; align-items: center; }
-  header h1 { font-size: 1.2rem; font-weight: 600; }
-  header a { color: rgba(255,255,255,0.8); font-size: 0.85rem; text-decoration: none; }
-  header a:hover { color: #fff; }
-  main { max-width: 960px; margin: 2rem auto; padding: 0 1rem; display: grid; gap: 1.5rem; }
-  .card { background: #fff; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,.07); padding: 1.5rem; }
-  .card h2 { font-size: 1rem; font-weight: 600; color: #374151; margin-bottom: 1rem; padding-bottom: .5rem; border-bottom: 1px solid #e5e7eb; }
-  .stats { display: flex; gap: 1rem; }
-  .stat { flex: 1; background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 8px; padding: .75rem 1rem; text-align: center; }
-  .stat-val { font-size: 1.6rem; font-weight: 700; color: #667eea; }
-  .stat-lbl { font-size: .75rem; color: #6b7280; margin-top: .2rem; }
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Admin – QR-Meldungen</title>
+    <?php
+    $fav = null;
+    foreach (['ico', 'png', 'jpg', 'svg'] as $ext) {
+        if (file_exists(__DIR__ . '/favicon/favicon.' . $ext)) {
+            $fav = 'favicon/favicon.' . $ext;
+            $mtime = filemtime(__DIR__ . '/favicon/favicon.' . $ext);
+            $type = ($ext === 'ico') ? 'x-icon' : $ext;
+            echo '<link rel="icon" type="image/' . $type . '" href="' . $fav . '?v=' . $mtime . '">';
+            break;
+        }
+    }
+    ?>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #667eea;
+            --secondary: #764ba2;
+            --sidebar-bg: #1f2937;
+            --sidebar-hover: #374151;
+            --bg-body: #f3f4f6;
+            --bg-card: #ffffff;
+            --text-main: #1f2937;
+            --text-muted: #6b7280;
+            --accent: #3b82f6;
+            --border: #e5e7eb;
+        }
 
-  /* Meldungs-Tabelle */
-  .msg-table { width: 100%; border-collapse: collapse; font-size: .875rem; }
-  .msg-table th { text-align: left; padding: .5rem .75rem; color: #6b7280; font-weight: 600; border-bottom: 2px solid #e5e7eb; }
-  .msg-table td { padding: .6rem .75rem; border-bottom: 1px solid #f3f4f6; vertical-align: middle; }
-  .msg-table tr:hover td { background: #fafafa; }
-  .badge { display: inline-block; padding: .2rem .55rem; border-radius: 100px; font-size: .7rem; font-weight: 600; letter-spacing: .4px; text-transform: uppercase; }
-  .badge-standard  { background: #dbeafe; color: #1d4ed8; }
-  .badge-active    { background: #d1fae5; color: #065f46; }
-  .badge-scheduled { background: #fef3c7; color: #92400e; }
-  .badge-expired   { background: #f3f4f6; color: #9ca3af; }
-  .badge-inactive  { background: #f3f4f6; color: #9ca3af; }
-  .act-btn { display: inline-block; padding: .25rem .6rem; border-radius: 6px; font-size: .78rem; font-weight: 500; text-decoration: none; border: 1px solid transparent; cursor: pointer; background: none; }
-  .btn-edit    { border-color: #d1d5db; color: #374151; }
-  .btn-edit:hover { background: #f9fafb; }
-  .btn-std     { border-color: #bfdbfe; color: #1d4ed8; }
-  .btn-std:hover { background: #eff6ff; }
-  .btn-del     { border-color: #fca5a5; color: #dc2626; }
-  .btn-del:hover { background: #fef2f2; }
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Inter', system-ui, -apple-system, sans-serif; background: var(--bg-body); color: var(--text-main); min-height: 100vh; display: flex; overflow-x: hidden; }
 
-  /* Formular */
-  form label { display: block; font-size: .85rem; font-weight: 500; color: #374151; margin-bottom: .3rem; }
-  form input[type=text], form input[type=datetime-local], form input[type=time], form textarea {
-    width: 100%; padding: .5rem .75rem; border: 1px solid #d1d5db; border-radius: 8px;
-    font-size: .9rem; font-family: inherit; margin-bottom: .9rem; background: #f9fafb;
-    transition: border-color .15s;
-  }
-  form input:focus, form textarea:focus { outline: none; border-color: #667eea; background: #fff; }
-  form textarea { height: 140px; resize: vertical; }
-  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
-  .hint { font-size: .75rem; color: #6b7280; margin-bottom: .9rem; }
-  .btn-primary { padding: .55rem 1.2rem; background: linear-gradient(135deg,#667eea,#764ba2); color: #fff; border: none; border-radius: 8px; font-weight: 600; font-size: .9rem; cursor: pointer; }
-  .btn-primary:hover { opacity: .9; }
-  .btn-cancel  { padding: .55rem 1rem; color: #6b7280; background: none; border: 1px solid #d1d5db; border-radius: 8px; font-size: .9rem; cursor: pointer; text-decoration: none; display: inline-block; margin-left: .5rem; }
-  .edit-banner { background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 8px; padding: .6rem 1rem; font-size: .85rem; color: #1d4ed8; margin-bottom: 1rem; }
+        /* Sidebar Layout */
+        .admin-wrapper { display: flex; width: 100%; min-height: 100vh; }
+        
+        aside {
+            width: 260px;
+            background: var(--sidebar-bg);
+            color: #fff;
+            padding: 2rem 1.5rem;
+            flex-shrink: 0;
+            display: flex;
+            flex-direction: column;
+            position: fixed;
+            top: 0;
+            bottom: 0;
+            left: 0;
+            z-index: 100;
+        }
+        
+        .logo { font-size: 1.25rem; font-weight: 800; margin-bottom: 2.5rem; display: flex; align-items: center; gap: 0.75rem; color: #fff; text-decoration: none; }
+        
+        .nav-links { list-style: none; flex: 1; }
+        .nav-links li { margin-bottom: 0.5rem; }
+        .nav-links a {
+            display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem 1rem;
+            color: rgba(255,255,255,0.7); text-decoration: none; border-radius: 8px; font-size: 0.9rem; font-weight: 500; transition: all 0.2s;
+        }
+        .nav-links a:hover, .nav-links a.active { background: var(--sidebar-hover); color: #fff; }
+        
+        .logout-link {
+            margin-top: auto; padding-top: 1.5rem; border-top: 1px solid rgba(255,255,255,0.1);
+            color: #fca5a5; text-decoration: none; font-size: 0.9rem; display: flex; align-items: center; gap: 0.75rem; transition: color 0.2s;
+        }
+        .logout-link:hover { color: #f87171; }
 
-  /* Scan-Tabelle */
-  .scan-table { width: 100%; border-collapse: collapse; font-size: .8rem; }
-  .scan-table th { text-align: left; padding: .4rem .6rem; color: #6b7280; border-bottom: 2px solid #e5e7eb; }
-  .scan-table td { padding: .4rem .6rem; border-bottom: 1px solid #f3f4f6; color: #374151; }
-  .ua { max-width: 280px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        main { flex: 1; margin-left: 260px; padding: 2rem 2.5rem; max-width: 1200px; width: 100%; }
+        
+        header { margin-bottom: 2.5rem; display: flex; justify-content: space-between; align-items: center; }
+        header h1 { font-size: 1.5rem; font-weight: 700; color: var(--text-main); }
 
-  /* Live-Vorschau Styling (analog zu index.html) */
-  .preview-container { margin-top: 1.5rem; border: 1px dashed #d1d5db; border-radius: 12px; padding: 1rem; background: #fafafa; }
-  .preview-label { font-size: .75rem; font-weight: 600; color: #6b7280; text-transform: uppercase; margin-bottom: .5rem; display: block; }
-  .message-box {
-    background: #f8f9fa;
-    border-left: 4px solid #667eea;
-    padding: 1.2rem;
-    border-radius: 8px;
-    line-height: 1.6;
-    color: #444;
-    font-size: 0.95rem;
-  }
-  .message-box strong {
-    color: #667eea;
-    display: block;
-    margin-bottom: 0.5rem;
-    font-size: 0.9rem;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-  }
+        .card { background: var(--bg-card); border-radius: 16px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06); padding: 1.5rem; border: 1px solid var(--border); margin-bottom: 1.5rem; }
+        .card h2 { font-size: 1.1rem; font-weight: 700; color: var(--text-main); margin-bottom: 1.25rem; display: flex; align-items: center; gap: 0.5rem; }
+        
+        /* Dashboard Stats */
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.25rem; margin-bottom: 2rem; }
+        .stat-card { background: #fff; padding: 1.5rem; border-radius: 12px; border: 1px solid var(--border); transition: transform 0.2s; }
+        .stat-card:hover { transform: translateY(-2px); }
+        .stat-val { font-size: 1.75rem; font-weight: 800; color: var(--primary); margin-bottom: 0.25rem; }
+        .stat-lbl { font-size: 0.85rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
 
-  /* Toolbar Styling */
-  .toolbar { display: flex; gap: 0.5rem; background: #f3f4f6; padding: 0.5rem; border: 1px solid #d1d5db; border-bottom: none; border-radius: 8px 8px 0 0; margin-bottom: 0; }
-  .toolbar-btn {
-    background: #fff; border: 1px solid #d1d5db; border-radius: 4px; padding: 0.3rem 0.6rem;
-    font-size: 0.85rem; font-weight: 600; cursor: pointer; transition: all 0.2s;
-    display: flex; align-items: center; justify-content: center; min-width: 32px;
-  }
-  .toolbar-btn:hover { background: #eff6ff; border-color: #667eea; color: #667eea; }
-  .toolbar-btn i { font-style: normal; }
-  #msg-content { border-top-left-radius: 0; border-top-right-radius: 0; }
+        /* Tables & UI Components */
+        .table-responsive { overflow-x: auto; }
+        .msg-table { width: 100%; border-collapse: collapse; font-size: 0.875rem; }
+        .msg-table th { text-align: left; padding: 1rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase; font-size: 0.75rem; letter-spacing: 0.5px; border-bottom: 1px solid var(--border); }
+        .msg-table td { padding: 1rem; border-bottom: 1px solid #f9fafb; vertical-align: middle; }
+        .msg-table tr:hover td { background: #f9fafb; }
+        
+        .badge { display: inline-flex; align-items: center; padding: 0.25rem 0.75rem; border-radius: 100px; font-size: 0.75rem; font-weight: 700; letter-spacing: 0.2px; text-transform: uppercase; }
+        .badge-standard { background: #eff6ff; color: #1e40af; }
+        .badge-active { background: #ecfdf5; color: #065f46; }
+        .badge-scheduled { background: #fffbeb; color: #92400e; }
+        .badge-expired, .badge-inactive { background: #f9fafb; color: #4b5563; }
 
-  /* Modal Styling */
-  .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center; padding: 1rem; }
-  .modal-card { background: #fff; width: 100%; max-width: 500px; border-radius: 16px; padding: 2rem; position: relative; animation: slideUp 0.3s ease-out; }
-  .modal-close { position: absolute; top: 1rem; right: 1rem; cursor: pointer; font-size: 1.5rem; color: #9ca3af; border: none; background: none; }
-  .modal-close:hover { color: #374151; }
-  @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        .btn { display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.5rem 1rem; border-radius: 8px; font-size: 0.85rem; font-weight: 600; text-decoration: none; cursor: pointer; transition: all 0.2s; border: 1px solid transparent; }
+        .btn-ghost { border-color: var(--border); color: var(--text-main); background: #fff; }
+        .btn-ghost:hover { background: #f9fafb; border-color: #d1d5db; }
+        .btn-primary { background: linear-gradient(135deg, var(--primary), var(--secondary)); color: #fff; border: none; }
+        .btn-primary:hover { opacity: 0.9; transform: translateY(-1px); }
+        .btn-danger { color: #dc2626; border-color: #fee2e2; background: #fff; font-size: 0.75rem; }
+        .btn-danger:hover { background: #fef2f2; }
+        .btn-std { color: var(--accent); border-color: #dbeafe; background: #fff; font-size: 0.75rem; }
+        .btn-std:hover { background: #eff6ff; }
 
-  /* Live Dashboard Preview */
-  .live-preview-card {
-    background: linear-gradient(135deg, #667eea11 0%, #764ba211 100%);
-    border: 2px solid #667eea33;
-    border-radius: 12px;
-    padding: 1.2rem;
-    margin-bottom: 0.5rem;
-    position: relative;
-    overflow: hidden;
-  }
-  .live-preview-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 0.8rem;
-  }
-  .live-preview-title {
-    font-size: 0.75rem;
-    font-weight: 700;
-    color: #667eea;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-  }
-  .live-preview-status {
-    font-size: 0.7rem;
-    font-weight: 600;
-    padding: 0.15rem 0.5rem;
-    border-radius: 100px;
-    background: #fff;
-    border: 1px solid #667eea33;
-    color: #667eea;
-  }
-  .live-preview-content {
-    background: #fff;
-    border-radius: 8px;
-    padding: 1rem;
-    font-size: 0.9rem;
-    line-height: 1.4;
-    color: #374151;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-    max-height: 120px;
-    overflow-y: auto;
-  }
-  .live-preview-content strong { color: #667eea; }
-  .refresh-indicator {
-    position: absolute;
-    bottom: 0.5rem;
-    right: 0.8rem;
-    font-size: 0.65rem;
-    color: #9ca3af;
-    display: flex;
-    align-items: center;
-    gap: 0.3rem;
-  }
-  .refresh-dot {
-    width: 6px;
-    height: 6px;
-    border-radius: 50%;
-    background: #10b981;
-    opacity: 0.5;
-  }
-  .refreshing .refresh-dot {
-    animation: pulse 1s infinite;
-    background: #667eea;
-    opacity: 1;
-  }
+        /* Form Controls */
+        label { display: block; font-size: 0.875rem; font-weight: 600; color: var(--text-main); margin-bottom: 0.5rem; }
+        input[type=text], input[type=datetime-local], input[type=time], textarea, select {
+            width: 100%; padding: 0.75rem 1rem; border: 1px solid var(--border); border-radius: 10px;
+            font-size: 0.9rem; font-family: inherit; background: #f9fafb; transition: all 0.2s; margin-bottom: 1.25rem;
+        }
+        input:focus, textarea:focus, select:focus { outline: none; border-color: var(--primary); background: #fff; box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1); }
+        textarea { height: 160px; resize: vertical; margin-bottom: 0; }
+        .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.25rem; }
 
-</style>
+        /* Custom UI */
+        .live-preview-card { background: #fff; border: 1px solid var(--border); border-radius: 16px; padding: 1.5rem; margin-bottom: 2.5rem; position: relative; overflow: hidden; }
+        .live-preview-content { background: #f9fafb; border-radius: 12px; padding: 1.25rem; border: 1px dashed var(--border); min-height: 80px; }
+        .refresh-dot { width: 8px; height: 8px; border-radius: 50%; background: #10b981; margin-right: 0.5rem; display: inline-block; position: relative; }
+        .refresh-dot::after { content: ''; position: absolute; width: 100%; height: 100%; border-radius: 50%; background: inherit; animation: pulse 1.5s infinite; }
+        @keyframes pulse { 0% { opacity: 0.8; transform: scale(1); } 100% { opacity: 0; transform: scale(3); } }
+
+        .toolbar { display: flex; gap: 0.4rem; background: #f9fafb; padding: 0.6rem; border: 1px solid var(--border); border-bottom: none; border-radius: 10px 10px 0 0; }
+        .toolbar-btn { background: #fff; border: 1px solid var(--border); border-radius: 6px; padding: 0.4rem 0.6rem; font-size: 0.8rem; font-weight: 700; cursor: pointer; transition: all 0.2s; }
+        .toolbar-btn:hover { border-color: var(--primary); color: var(--primary); }
+
+        .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 200; align-items: center; justify-content: center; backdrop-filter: blur(4px); }
+        .modal-card { background: #fff; width: 95%; max-width: 550px; border-radius: 20px; padding: 2.5rem; position: relative; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1); }
+
+        @media (max-width: 900px) {
+            aside { width: 80px; padding: 2rem 0; align-items: center; }
+            aside span { display: none; }
+            .logo { margin-bottom: 2rem; justify-content: center; }
+            main { margin-left: 80px; padding: 1.5rem; }
+        }
+    </style>
 </head>
 <body>
-<header>
-  <h1>📣 QR Admin</h1>
-  <a href="logout.php">Abmelden</a>
-</header>
-<main>
-  
-  <!-- Permanente Live-Vorschau der aktuellen Meldung -->
-  <div class="live-preview-card" id="live-dashboard-preview">
-    <div class="live-preview-header">
-      <div class="live-preview-title">
-        <span class="refresh-dot"></span>
-        Aktuelle öffentliche Meldung
-      </div>
-      <div id="live-preview-status" class="live-preview-status">Wird geladen...</div>
-    </div>
-    <div id="live-preview-render" class="live-preview-content">
-      <div style="color:#9ca3af; font-style:italic">Lade aktuelle Meldung...</div>
-    </div>
-    <div class="refresh-indicator">
-      Automatische Aktualisierung aktiv
-    </div>
-  </div>
-
-
-  <!-- Statistiken -->
-  <div class="card">
-    <h2>Statistiken</h2>
-    <div class="stats">
-      <div class="stat"><div class="stat-val"><?= $total_scans ?></div><div class="stat-lbl">Scans gesamt</div></div>
-      <div class="stat"><div class="stat-val"><?= $today_scans ?></div><div class="stat-lbl">Scans heute</div></div>
-      <div class="stat"><div class="stat-val"><?= count($messages) ?></div><div class="stat-lbl">Meldungen</div></div>
-    </div>
-  </div>
-
-  <!-- Meldungsverwaltung -->
-  <div class="card">
-    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 1rem; border-bottom: 1px solid #e5e7eb; padding-bottom: .5rem;">
-      <h2 style="margin-bottom:0; border-bottom:0; padding-bottom:0;">Meldungen verwalten</h2>
-      <div style="display:flex; gap:0.5rem;">
-        <a href="export_messages.php" class="act-btn btn-edit" style="text-decoration:none; display:flex; align-items:center; gap:0.3rem;">
-          📥 Export (JSON)
+<div class="admin-wrapper">
+    <aside>
+        <a href="index.php" class="logo">
+            <span>📣 Admin</span>
         </a>
-        <button onclick="document.getElementById('import-form').style.display='flex'" class="act-btn btn-edit" style="display:flex; align-items:center; gap:0.3rem;">
-          📤 Import
-        </button>
-      </div>
-    </div>
+        <ul class="nav-links">
+            <li><a href="index.php" class="active"><span>Dashboard</span></a></li>
+            <li><a href="favicon_upload.php"><span>Fav-Icon</span></a></li>
+        </ul>
+        <a href="logout.php" class="logout-link"><span>Abmelden</span></a>
+    </aside>
 
-    <?php if ($import_error): ?>
-      <div style="background:#fee2e2; border:1px solid #fecaca; color:#b91c1c; padding:.75rem 1rem; border-radius:8px; margin-bottom:1rem; font-size:.85rem;">
-        ❌ <?= htmlspecialchars($import_error) ?>
-      </div>
-    <?php endif; ?>
-    <?php if ($import_success): ?>
-      <div style="background:#d1fae5; border:1px solid #a7f3d0; color:#065f46; padding:.75rem 1rem; border-radius:8px; margin-bottom:1rem; font-size:.85rem;">
-        ✅ <?= htmlspecialchars($import_success) ?>
-      </div>
-    <?php endif; ?>
-    <?php if (!empty($messages)): ?>
-    <table class="msg-table">
-      <thead><tr><th>Titel</th><th>Status</th><th>Zeitraum</th><th>Aktionen</th></tr></thead>
-      <tbody>
-      <?php foreach ($messages as $m):
-        $st = message_status($m, $now);
-      ?>
-      <tr>
-        <td><?= htmlspecialchars($m['title']) ?></td>
-        <td>
-          <span class="badge badge-<?= $st ?>">
-            <?= ['standard'=>'Standard','active'=>'Aktiv','scheduled'=>'Geplant','expired'=>'Abgelaufen','inactive'=>'Inaktiv'][$st] ?>
-          </span>
-        </td>
-        <td style="font-size:.78rem;color:#6b7280">
-          <?php if ($m['active_from'] && $m['active_until']): ?>
-            <?= date('d.m.Y H:i', strtotime($m['active_from'])) ?> –<br>
-            <?= date('d.m.Y H:i', strtotime($m['active_until'])) ?>
-          <?php else: echo '—'; endif; ?>
-          <?php if ($m['daily_start'] && $m['daily_end']): ?>
-            <br><span style="color:#667eea">Täglich: <?= substr($m['daily_start'], 0, 5) ?> – <?= substr($m['daily_end'], 0, 5) ?></span>
-          <?php endif; ?>
-          <?php if (!empty($m['active_days'])): ?>
-            <br><span style="color:#764ba2">Tage: 
-            <?php
-            $days = explode(',', $m['active_days']);
-            $dayNames = array_map(fn($d) => $wochentageNames[$d] ?? '', $days);
-            echo implode(', ', $dayNames);
-            ?>
-            </span>
-          <?php endif; ?>
-        </td>
-        <td>
-          <button class="act-btn btn-edit" style="border-color:#d1d5db;color:#374151" 
-                  onclick="openPreview(this)" 
-                  data-content="<?= htmlspecialchars($m['content']) ?>">Vorschau</button>
-          <a class="act-btn btn-edit" href="?edit=<?= $m['id'] ?>">Bearbeiten</a>
-          <?php if (!$m['is_default']): ?>
-            <form method="post" action="save.php" style="display:inline">
-              <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrf) ?>">
-              <input type="hidden" name="action" value="set_default">
-              <input type="hidden" name="id" value="<?= $m['id'] ?>">
-              <button class="act-btn btn-std" type="submit">Als Standard</button>
+    <main>
+        <header>
+            <h1>Dashboard</h1>
+            <div style="font-size: 0.85rem; color: var(--text-muted)">
+                <?= $now->format('d.m.Y H:i') ?>
+            </div>
+        </header>
+
+        <!-- Live Dashboard Preview -->
+        <div class="card" id="live-dashboard-preview" style="background: linear-gradient(135deg, rgba(102, 126, 234, 0.05), rgba(118, 75, 162, 0.05)); border-color: rgba(102, 126, 234, 0.2);">
+            <div style="display:flex; justify-content:space-between; align-items:center, margin-bottom: 1rem">
+                <h2 style="margin-bottom:0; border:none"><span class="refresh-dot"></span>Aktuelle öffentliche Meldung</h2>
+                <div id="live-preview-status" class="badge badge-active">Lade...</div>
+            </div>
+            <div id="live-preview-render" class="live-preview-content">
+                <div style="color:#9ca3af; font-style:italic">Lade aktuelle Meldung...</div>
+            </div>
+        </div>
+
+        <!-- Statistiken -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-val"><?= $total_scans ?></div>
+                <div class="stat-lbl">Scans gesamt</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-val"><?= $today_scans ?></div>
+                <div class="stat-lbl">Scans heute</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-val"><?= count($messages) ?></div>
+                <div class="stat-lbl">Meldungen</div>
+            </div>
+        </div>
+
+        <!-- Meldungsverwaltung -->
+        <div class="card">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem">
+                <h2 style="margin-bottom:0">Meldungen verwalten</h2>
+                <div style="display:flex; gap:0.5rem;">
+                    <a href="export_messages.php" class="btn btn-ghost">📥 Export</a>
+                    <button onclick="document.getElementById('import-form').style.display='flex'" class="btn btn-ghost">📤 Import</button>
+                </div>
+            </div>
+
+            <?php if ($import_error): ?>
+                <div style="background:#fef2f2; color:#991b1b; padding:1rem; border-radius:12px; margin-bottom:1.5rem; font-size:0.85rem; border:1px solid #fee2e2">
+                    ❌ <?= htmlspecialchars($import_error) ?>
+                </div>
+            <?php endif; ?>
+            <?php if ($import_success): ?>
+                <div style="background:#f0fdf4; color:#166534; padding:1rem; border-radius:12px; margin-bottom:1.5rem; font-size:0.85rem; border:1px solid #dcfce7">
+                    ✅ <?= htmlspecialchars($import_success) ?>
+                </div>
+            <?php endif; ?>
+
+            <div class="table-responsive">
+                <table class="msg-table">
+                    <thead><tr><th>Titel</th><th>Status</th><th>Zeitraum</th><th>Aktionen</th></tr></thead>
+                    <tbody>
+                    <?php foreach ($messages as $m):
+                        $st = message_status($m, $now);
+                    ?>
+                    <tr>
+                        <td style="font-weight: 600"><?= htmlspecialchars($m['title']) ?></td>
+                        <td>
+                            <span class="badge badge-<?= $st ?>">
+                                <?= ['standard'=>'Standard','active'=>'Aktiv','scheduled'=>'Geplant','expired'=>'Abgelaufen','inactive'=>'Inaktiv'][$st] ?>
+                            </span>
+                        </td>
+                        <td style="font-size:0.8rem; color:var(--text-muted)">
+                            <?php if ($m['active_from'] && $m['active_until']): ?>
+                                <?= date('d.m.Y H:i', strtotime($m['active_from'])) ?> – <?= date('d.m.Y H:i', strtotime($m['active_until'])) ?>
+                            <?php else: echo '—'; endif; ?>
+                            <?php if ($m['daily_start'] && $m['daily_end']): ?>
+                                <br><span style="color:var(--primary)">Täglich: <?= substr($m['daily_start'], 0, 5) ?> – <?= substr($m['daily_end'], 0, 5) ?></span>
+                            <?php endif; ?>
+                        </td>
+                        <td>
+                            <div style="display:flex; gap:0.4rem">
+                                <button class="btn btn-ghost" style="padding:0.3rem 0.6rem; font-size:0.75rem" onclick="openPreview(this)" data-content="<?= htmlspecialchars($m['content']) ?>">Vorschau</button>
+                                <a class="btn btn-ghost" style="padding:0.3rem 0.6rem; font-size:0.75rem" href="?edit=<?= $m['id'] ?>">Bearbeiten</a>
+                                <?php if (!$m['is_default']): ?>
+                                    <form method="post" action="save.php" style="display:inline">
+                                        <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrf) ?>">
+                                        <input type="hidden" name="action" value="set_default">
+                                        <input type="hidden" name="id" value="<?= $m['id'] ?>">
+                                        <button class="btn btn-std" type="submit">Standard</button>
+                                    </form>
+                                    <form method="post" action="save.php" style="display:inline" onsubmit="return confirm('Meldung löschen?')">
+                                        <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrf) ?>">
+                                        <input type="hidden" name="action" value="delete">
+                                        <input type="hidden" name="id" value="<?= $m['id'] ?>">
+                                        <button class="btn btn-danger" type="submit">Löschen</button>
+                                    </form>
+                                <?php endif; ?>
+                            </div>
+                        </td>
+                    </tr>
+                    <?php endforeach; ?>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2><?= $editing ? 'Meldung bearbeiten' : 'Neue Meldung' ?></h2>
+            <?php if ($editing): ?>
+                <div style="background:#eff6ff; color:#1e40af; padding:1rem; border-radius:10px; margin-bottom:1.5rem; font-size:0.85rem; border:1px solid #dbeafe">
+                    ✏️ Sie bearbeiten: <strong><?= htmlspecialchars($editing['title']) ?></strong>
+                </div>
+            <?php endif; ?>
+            
+            <form method="post" action="save.php">
+                <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrf) ?>">
+                <input type="hidden" name="action" value="<?= $editing ? 'edit' : 'add' ?>">
+                <?php if ($editing): ?>
+                    <input type="hidden" name="id" value="<?= $editing['id'] ?>">
+                <?php endif; ?>
+
+                <label>Interner Titel</label>
+                <input type="text" name="title" required maxlength="255" value="<?= $editing ? htmlspecialchars($editing['title']) : '' ?>">
+
+                <label>Meldungstext <span style="font-weight:400; color:var(--text-muted)">(HTML erlaubt)</span></label>
+                <div class="toolbar">
+                    <button type="button" class="toolbar-btn" onclick="insertTag('<h1>', '</h1>')">H1</button>
+                    <button type="button" class="toolbar-btn" onclick="insertTag('<h2>', '</h2>')">H2</button>
+                    <button type="button" class="toolbar-btn" onclick="insertTag('<b>', '</b>')"><b>B</b></button>
+                    <button type="button" class="toolbar-btn" onclick="insertTag('<i>', '</i>')"><i>I</i></button>
+                    <button type="button" class="toolbar-btn" onclick="insertLink()">🔗</button>
+                    <button type="button" class="toolbar-btn" onclick="insertTag('<p>', '</p>')">¶</button>
+                </div>
+                <textarea name="content" id="msg-content" required><?= $editing ? htmlspecialchars($editing['content']) : '' ?></textarea>
+
+                <div style="margin: 1.5rem 0; padding: 1.25rem; background: #fafafa; border-radius: 12px; border: 1px solid var(--border)">
+                    <span style="font-size:0.75rem; font-weight:700; color:var(--text-muted); text-transform:uppercase; display:block; margin-bottom:0.75rem">Live-Vorschau</span>
+                    <div id="preview-render" style="background:#fff; padding:1rem; border-radius:8px; border:1px solid var(--border); min-height:60px">
+                        <?= $editing ? $editing['content'] : '<i>Ihre Nachricht erscheint hier...</i>' ?>
+                    </div>
+                </div>
+
+                <div class="form-grid">
+                    <div>
+                        <label>Aktiv ab</label>
+                        <input type="datetime-local" name="active_from" value="<?= $editing && $editing['active_from'] ? date('Y-m-d\TH:i', strtotime($editing['active_from'])) : '' ?>">
+                    </div>
+                    <div>
+                        <label>Aktiv bis</label>
+                        <input type="datetime-local" name="active_until" value="<?= $editing && $editing['active_until'] ? date('Y-m-d\TH:i', strtotime($editing['active_until'])) : '' ?>">
+                    </div>
+                </div>
+                
+                <div class="form-grid">
+                    <div>
+                        <label>Täglich von</label>
+                        <input type="time" name="daily_start" value="<?= $editing && $editing['daily_start'] ? substr($editing['daily_start'], 0, 5) : '' ?>">
+                    </div>
+                    <div>
+                        <label>Täglich bis</label>
+                        <input type="time" name="daily_end" value="<?= $editing && $editing['daily_end'] ? substr($editing['daily_end'], 0, 5) : '' ?>">
+                    </div>
+                </div>
+                
+                <div style="margin-bottom: 2rem;">
+                    <label>An Wochentagen</label>
+                    <div style="display:flex; gap:0.5rem; flex-wrap:wrap; margin-bottom:1rem;">
+                        <?php 
+                        $selDays = $editing && $editing['active_days'] ? explode(',', $editing['active_days']) : [];
+                        foreach([1=>'Mo', 2=>'Di', 3=>'Mi', 4=>'Do', 5=>'Fr', 6=>'Sa', 7=>'So'] as $dVal => $dName): ?>
+                            <label style="display:inline-flex; align-items:center; background:#fff; padding:0.5rem 0.75rem; border-radius:10px; border:1px solid var(--border); font-size:0.85rem; font-weight:500; cursor:pointer; margin-bottom:0">
+                                <input type="checkbox" name="active_days[]" value="<?= $dVal ?>" <?= in_array((string)$dVal, $selDays) ? 'checked' : '' ?> class="day-cb" style="margin-right:0.5rem">
+                                <?= $dName ?>
+                            </label>
+                        <?php endforeach; ?>
+                    </div>
+                    <div style="display:flex; gap:0.5rem;">
+                        <button type="button" class="btn btn-ghost" style="padding:0.4rem 0.75rem; font-size:0.75rem" onclick="checkDays([1,2,3,4,5])">Mo-Fr</button>
+                        <button type="button" class="btn btn-ghost" style="padding:0.4rem 0.75rem; font-size:0.75rem" onclick="checkDays([6,7])">Sa+So</button>
+                        <button type="button" class="btn btn-ghost" style="padding:0.4rem 0.75rem; font-size:0.75rem" onclick="checkDays([1,2,3,4,5,6,7])">Alle</button>
+                        <button type="button" class="btn btn-ghost" style="padding:0.4rem 0.75rem; font-size:0.75rem" onclick="checkDays([])">Keine</button>
+                    </div>
+                </div>
+
+                <div style="display:flex; gap:1rem; align-items:center">
+                    <button class="btn btn-primary" type="submit"><?= $editing ? 'Änderungen speichern' : 'Meldung erstellen' ?></button>
+                    <?php if ($editing): ?>
+                        <a class="btn btn-ghost" href="index.php">Abbrechen</a>
+                    <?php endif; ?>
+                </div>
             </form>
-            <form method="post" action="save.php" style="display:inline" onsubmit="return confirm('Meldung löschen?')">
-              <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrf) ?>">
-              <input type="hidden" name="action" value="delete">
-              <input type="hidden" name="id" value="<?= $m['id'] ?>">
-              <button class="act-btn btn-del" type="submit">Löschen</button>
-            </form>
-          <?php endif; ?>
-        </td>
-      </tr>
-      <?php endforeach; ?>
-      </tbody>
-    </table>
-    <?php endif; ?>
-  </div>
-
-  <!-- Formular: Hinzufügen / Bearbeiten -->
-  <div class="card">
-    <h2><?= $editing ? 'Meldung bearbeiten' : 'Neue Meldung' ?></h2>
-    <?php if ($editing): ?>
-    <div class="edit-banner">✏️ Sie bearbeiten: <strong><?= htmlspecialchars($editing['title']) ?></strong></div>
-    <?php endif; ?>
-    <form method="post" action="save.php">
-      <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrf) ?>">
-      <input type="hidden" name="action" value="<?= $editing ? 'edit' : 'add' ?>">
-      <?php if ($editing): ?>
-      <input type="hidden" name="id" value="<?= $editing['id'] ?>">
-      <?php endif; ?>
-
-      <label>Interner Titel (nur im Adminbereich sichtbar)</label>
-      <input type="text" name="title" required maxlength="255"
-             value="<?= $editing ? htmlspecialchars($editing['title']) : '' ?>">
-
-      <label>Meldungstext (einfache HTML-Tags erlaubt: &lt;b&gt;, &lt;i&gt;, &lt;a href="…"&gt;, &lt;p&gt;, &lt;br&gt;)</label>
-      <div class="toolbar">
-        <button type="button" class="toolbar-btn" onclick="insertTag('<h1>', '</h1>')" title="Überschrift 1">H1</button>
-        <button type="button" class="toolbar-btn" onclick="insertTag('<h2>', '</h2>')" title="Überschrift 2">H2</button>
-        <button type="button" class="toolbar-btn" onclick="insertTag('<b>', '</b>')" title="Fett"><b>B</b></button>
-        <button type="button" class="toolbar-btn" onclick="insertTag('<i>', '</i>')" title="Kursiv"><i>I</i></button>
-        <button type="button" class="toolbar-btn" onclick="insertLink()" title="Link">🔗</button>
-        <button type="button" class="toolbar-btn" onclick="insertTag('<p>', '</p>')" title="Absatz">¶</button>
-        <button type="button" class="toolbar-btn" onclick="insertTag('<br>', '')" title="Zeilenumbruch">↵</button>
-      </div>
-      <textarea name="content" id="msg-content" required><?= $editing ? htmlspecialchars($editing['content']) : '' ?></textarea>
-
-      <div class="preview-container">
-        <span class="preview-label">Live-Vorschau</span>
-        <div class="message-box">
-          <strong>📣 Nachricht</strong>
-          <div id="preview-render"><?= $editing ? $editing['content'] : 'Ihre Nachricht erscheint hier...' ?></div>
         </div>
-      </div>
 
-      <div class="form-row">
-        <div>
-          <label>Aktiv ab (optional)</label>
-          <input type="datetime-local" name="active_from"
-                 value="<?= $editing && $editing['active_from'] ? date('Y-m-d\TH:i', strtotime($editing['active_from'])) : '' ?>">
+        <div class="card">
+            <h2>Letzte Scans</h2>
+            <div class="table-responsive">
+                <table class="msg-table">
+                    <thead><tr><th>Zeitstempel</th><th>IP-Adresse</th><th>User Agent</th></tr></thead>
+                    <tbody>
+                    <?php foreach ($recent_scans as $s): ?>
+                    <tr>
+                        <td style="white-space:nowrap"><?= date('d.m.Y H:i:s', strtotime($s['ts'])) ?></td>
+                        <td style="font-family:monospace; font-size:0.8rem"><?= htmlspecialchars($s['ip'] ?? '—') ?></td>
+                        <td style="max-width:300px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:0.75rem; color:var(--text-muted)" title="<?= htmlspecialchars($s['user_agent'] ?? '') ?>">
+                            <?= htmlspecialchars($s['user_agent'] ?? '—') ?>
+                        </td>
+                    </tr>
+                    <?php endforeach; ?>
+                    </tbody>
+                </table>
+            </div>
         </div>
-        <div>
-          <label>Aktiv bis (optional)</label>
-          <input type="datetime-local" name="active_until"
-                 value="<?= $editing && $editing['active_until'] ? date('Y-m-d\TH:i', strtotime($editing['active_until'])) : '' ?>">
-        </div>
-      </div>
-      
-      <div class="form-row">
-        <div>
-          <label>Täglich von (optional)</label>
-          <input type="time" name="daily_start"
-                 value="<?= $editing && $editing['daily_start'] ? substr($editing['daily_start'], 0, 5) : '' ?>">
-        </div>
-        <div>
-          <label>Täglich bis (optional)</label>
-          <input type="time" name="daily_end"
-                 value="<?= $editing && $editing['daily_end'] ? substr($editing['daily_end'], 0, 5) : '' ?>">
-        </div>
-      </div>
-      
-      <div style="margin-bottom: 1rem;">
-        <label>An Wochentagen (optional)</label>
-        <?php 
-        $selDays = $editing && $editing['active_days'] ? explode(',', $editing['active_days']) : [];
-        ?>
-        <div style="display:flex; gap:0.5rem; flex-wrap:wrap; margin-bottom: 0.5rem;">
-          <?php foreach([1=>'Mo', 2=>'Di', 3=>'Mi', 4=>'Do', 5=>'Fr', 6=>'Sa', 7=>'So'] as $dVal => $dName): ?>
-            <label style="display:inline-flex; align-items:center; background:#f9fafb; padding:0.4rem 0.6rem; border-radius:6px; border:1px solid #d1d5db; font-size:.85rem; font-weight:normal; margin-bottom:0; cursor:pointer;">
-              <input type="checkbox" name="active_days[]" value="<?= $dVal ?>" <?= in_array((string)$dVal, $selDays) ? 'checked' : '' ?> class="day-cb" style="margin-right:0.3rem;">
-              <?= $dName ?>
-            </label>
-          <?php endforeach; ?>
-        </div>
-        <div style="display:flex; gap:0.5rem;">
-          <button type="button" class="act-btn btn-std" onclick="checkDays([1,2,3,4,5])">Mo-Fr</button>
-          <button type="button" class="act-btn btn-std" onclick="checkDays([6,7])">Sa+So</button>
-          <button type="button" class="act-btn btn-std" onclick="checkDays([1,2,3,4,5,6,7])">Jeden Tag</button>
-          <button type="button" class="act-btn btn-cancel" style="margin-left:0; border-color:#d1d5db; padding:0.25rem 0.6rem;" onclick="checkDays([])">Aufheben</button>
-        </div>
-      </div>
+    </main>
+</div>
 
-      <p class="hint">Zeitraum, tägliche Zeit und Wochentage können kombiniert werden. Ohne diese Optionen ist die Meldung inaktiv, bis man sie als Standard setzt.</p>
-
-      <button class="btn-primary" type="submit"><?= $editing ? 'Speichern' : 'Hinzufügen' ?></button>
-      <?php if ($editing): ?>
-      <a class="btn-cancel" href="index.php">Abbrechen</a>
-      <?php endif; ?>
-    </form>
-  </div>
-
-  <!-- Letzte Scans -->
-  <div class="card">
-    <h2>Letzte Scans</h2>
-    <table class="scan-table">
-      <thead><tr><th>Zeitstempel</th><th>IP-Adresse</th><th>User Agent</th></tr></thead>
-      <tbody>
-      <?php foreach ($recent_scans as $s): ?>
-      <tr>
-        <td><?= htmlspecialchars($s['ts']) ?></td>
-        <td><?= htmlspecialchars($s['ip'] ?? '—') ?></td>
-        <td class="ua" title="<?= htmlspecialchars($s['user_agent'] ?? '') ?>">
-          <?= htmlspecialchars(mb_substr($s['user_agent'] ?? '—', 0, 80)) ?>
-        </td>
-      </tr>
-      <?php endforeach; ?>
-      </tbody>
-    </table>
-  </div>
-
-  <!-- Modal für Listen-Vorschau -->
-  <div id="preview-modal" class="modal-overlay" onclick="if(event.target==this) closePreview()">
+<!-- Modals -->
+<div id="preview-modal" class="modal-overlay" onclick="if(event.target==this) closePreview()">
     <div class="modal-card">
-      <button class="modal-close" onclick="closePreview()">&times;</button>
-      <h2 style="margin-bottom:1.5rem;border:none">Vorschau</h2>
-      <div class="message-box">
-        <strong>📣 Nachricht</strong>
-        <div id="modal-content-render"></div>
-      </div>
-      <button class="btn-primary" style="width:100%;margin-top:1rem" onclick="closePreview()">Schließen</button>
+        <button onclick="closePreview()" style="position:absolute; top:1.5rem; right:1.5rem; border:none; background:none; font-size:1.5rem; cursor:pointer; color:var(--text-muted)">&times;</button>
+        <h2 style="border:none; margin-bottom:1.5rem">Inhalts-Vorschau</h2>
+        <div id="modal-content-render" style="background:#f9fafb; padding:1.5rem; border-radius:12px; border:1px solid var(--border); min-height:100px; line-height:1.6"></div>
+        <button class="btn btn-primary" style="width:100%; margin-top:1.5rem; justify-content:center" onclick="closePreview()">Schließen</button>
     </div>
-  </div>
+</div>
 
-  <!-- Modal für Import -->
-  <div id="import-form" class="modal-overlay" onclick="if(event.target==this) this.style.display='none'">
+<div id="import-form" class="modal-overlay" onclick="if(event.target==this) this.style.display='none'">
     <div class="modal-card">
-      <button class="modal-close" onclick="document.getElementById('import-form').style.display='none'">&times;</button>
-      <h2 style="margin-bottom:1.5rem;border:none">Meldungen importieren</h2>
-      <p style="font-size: .85rem; color: #6b7280; margin-bottom: 1.5rem;">
-        Wählen Sie eine JSON-Exportdatei aus, um Meldungen hinzuzufügen. Bestehende Meldungen bleiben erhalten.
-      </p>
-      <form method="post" action="import_messages.php" enctype="multipart/form-data">
-        <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrf) ?>">
-        <label>Datei auswählen (.json)</label>
-        <input type="file" name="import_file" accept=".json" required style="margin-bottom: 1.5rem; display: block; width: 100%; padding: .5rem; border: 1px solid #d1d5db; border-radius: 8px;">
-        <div style="display:flex; gap:0.5rem;">
-          <button class="btn-primary" style="flex:1" type="submit">Importieren</button>
-          <button type="button" class="btn-cancel" style="flex:1" onclick="document.getElementById('import-form').style.display='none'">Abbrechen</button>
-        </div>
-      </form>
+        <button onclick="document.getElementById('import-form').style.display='none'" style="position:absolute; top:1.5rem; right:1.5rem; border:none; background:none; font-size:1.5rem; cursor:pointer; color:var(--text-muted)">&times;</button>
+        <h2 style="border:none; margin-bottom:1.5rem">Importieren</h2>
+        <form method="post" action="import_messages.php" enctype="multipart/form-data">
+            <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrf) ?>">
+            <label>JSON-Datei auswählen</label>
+            <input type="file" name="import_file" accept=".json" required style="margin-bottom:1.5rem">
+            <div style="display:flex; gap:1rem">
+                <button class="btn btn-primary" style="flex:1; justify-content:center" type="submit">Import starten</button>
+                <button type="button" class="btn btn-ghost" style="flex:1; justify-content:center" onclick="document.getElementById('import-form').style.display='none'">Abbrechen</button>
+            </div>
+        </form>
     </div>
-  </div>
-
-</main>
+</div>
 
 <script>
 document.addEventListener('DOMContentLoaded', () => {

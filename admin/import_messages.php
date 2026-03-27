@@ -46,7 +46,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         $m['active_from'] ?? null,
                         $m['active_until'] ?? null,
                         $m['daily_start'] ?? null,
-                        $m['daily_end'] ?? null
+                        $m['daily_end'] ?? null,
+                        $m['active_days'] ?? null
                     );
                     $count++;
                 }
