@@ -33,8 +33,15 @@ Ein PHP-basiertes System zur schnellen Kommunikation via QR-Code. Besucher scann
        "ADMIN_PASS_HASH": "Ihr_Passwort_Hash"
    }
    ```
-3. Importieren Sie das Datenbankschema (wird beim ersten Aufruf von `/scan` automatisch versucht zu erstellen).
-4. Konfigurieren Sie Ihren Webserver so, dass er auf das Hauptverzeichnis zeigt.
+3. **Passwort festlegen**:
+   - Rufen Sie im Browser `http://ihre-domain.de/admin/set_pass.php` auf.
+   - Geben Sie Ihr gewünschtes Admin-Passwort ein, um den Hash für die `credentials.json` zu generieren.
+   - Kopieren Sie den generierten Hash in Ihre `credentials.json` unter `ADMIN_PASS_HASH`.
+   - > [!WARNING]
+     > Löschen Sie die Datei `admin/set_pass.php` umgehend nach der Verwendung vom Server, um Sicherheitsrisiken zu vermeiden.
+
+4. Importieren Sie das Datenbankschema (wird beim ersten Aufruf von `/scan` automatisch versucht zu erstellen).
+5. Konfigurieren Sie Ihren Webserver so, dass er auf das Hauptverzeichnis zeigt.
 
 ## Projektstruktur
 

@@ -1,7 +1,26 @@
 credentials.json
 db/
 *.png
+*.jpg
+*.jpeg
+*.svg
 *.docx
+*.pdf
+*.log
+*.sh
+*.sql
+*.json
+!credentials.json.example
 .DS_Store
 Thumbs.db
+sync.ffs_db
+where-am-i.php
+gen_hash.php
+.agents/
+.agent/
+.gemini/
+.system_generated/
+walkthrough.md
+task.md
+implementation_plan.md
 
