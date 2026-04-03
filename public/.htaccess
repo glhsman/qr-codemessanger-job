@@ -1,0 +1,5 @@
+# Optional: pretty URLs for Apache
+RewriteEngine On
+RewriteRule ^scan/?$ /scan/index.php [L,QSA]
+RewriteRule ^admin/?$ /admin/index.php [L,QSA]
+RewriteRule ^admin/login/?$ /admin/login.php [L,QSA]

@@ -3,7 +3,15 @@
 // keeping sensitive credentials in source control. The loader checks the environment
 // variable `QR_CREDENTIALS_FILE` or falls back to `../credentials.json`.
 
-$secretsPath = getenv('QR_CREDENTIALS_FILE') ?: __DIR__ . '/../credentials.json';
+// Suche prioritär im lokalen Ordner, dann eine Ebene höher
+$secretsPath = getenv('QR_CREDENTIALS_FILE');
+if (!$secretsPath) {
+    if (file_exists(__DIR__ . '/credentials.json')) {
+        $secretsPath = __DIR__ . '/credentials.json';
+    } else {
+        $secretsPath = __DIR__ . '/../credentials.json';
+    }
+}
 $secrets = [];
 if (file_exists($secretsPath)) {
     $raw = file_get_contents($secretsPath);

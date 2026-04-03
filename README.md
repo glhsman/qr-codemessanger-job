@@ -22,17 +22,22 @@ Ein PHP-basiertes System zur schnellen Kommunikation via QR-Code. Besucher scann
    ```bash
    git clone https://github.com/glhsman/qr-codemessanger-job.git
    ```
-2. Erstellen Sie eine `credentials.json` basierend auf der Projektstruktur (siehe `config.php` für Details):
+2. **Konfiguration erstellen**:
+   Erstellen Sie eine `credentials.json` im Hauptverzeichnis (oder eine Ebene darüber, falls die Zugangsdaten außerhalb des Web-Roots liegen sollen). Die Anwendung sucht prioritär im Projektverzeichnis.
+   
+   Beispielinhalt:
    ```json
    {
-       "DB_HOST": "Ihr_Host",
-       "DB_NAME": "Ihr_DB_Name",
-       "DB_USER": "Ihr_Nutzer",
+       "DB_HOST": "192.168.1.5",
+       "DB_NAME": "qrcode",
+       "DB_USER": "Db-QrCode",
        "DB_PASS": "Ihr_Passwort",
-       "BASE_URL": "https://Ihre-Domain.de",
+       "BASE_URL": "http://localhost/QR_WebApp",
        "ADMIN_PASS_HASH": "Ihr_Passwort_Hash"
    }
    ```
+   > [!NOTE]
+   > Über die `credentials.json` lassen sich optional auch `ANONYMIZE_IP` (true/false) und `SESSION_COOKIE_SECURE` (true/false) steuern.
 3. **Passwort festlegen**:
    - Rufen Sie im Browser `http://ihre-domain.de/admin/set_pass.php` auf.
    - Geben Sie Ihr gewünschtes Admin-Passwort ein, um den Hash für die `credentials.json` zu generieren.

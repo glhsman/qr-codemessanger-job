@@ -1,0 +1,11 @@
+<a href="tel:+491701234567">Anrufen</a>
+
+<a href="tel:+492311234567,123">Support anrufen</a>
+
+mailto: → E-Mail
+
+tel: → Telefon
+
+sms: → SMS-App
+
+geo: → Kartenposition (auf Mobilgeräten)
