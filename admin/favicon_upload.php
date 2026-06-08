@@ -45,9 +45,6 @@ foreach (['ico', 'png', 'jpg', 'svg'] as $ext) {
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <title>Fav-Icon – QR Admin</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
             --primary: #667eea;
@@ -61,10 +58,10 @@ foreach (['ico', 'png', 'jpg', 'svg'] as $ext) {
             --border: #e5e7eb;
         }
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-        body { font-family: 'Inter', system-ui, -apple-system, sans-serif; background: var(--bg-body); color: var(--text-main); min-height: 100vh; display: flex; overflow-x: hidden; }
-        
+        body { font-family: system-ui, -apple-system, 'Segoe UI', sans-serif; background: var(--bg-body); color: var(--text-main); min-height: 100vh; display: flex; overflow-x: hidden; }
+
         .admin-wrapper { display: flex; width: 100%; min-height: 100vh; }
-        
+
         aside {
             width: 260px; background: var(--sidebar-bg); color: #fff; padding: 2rem 1.5rem; flex-shrink: 0; display: flex; flex-direction: column; position: fixed; top: 0; bottom: 0; left: 0; z-index: 100;
         }
@@ -84,7 +81,7 @@ foreach (['ico', 'png', 'jpg', 'svg'] as $ext) {
         .card { background: var(--bg-card); border-radius: 16px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); padding: 2rem; border: 1px solid var(--border); max-width: 600px; }
         .msg { background: #f0fdf4; color: #166534; padding: 1rem; border-radius: 10px; margin-bottom: 1.5rem; font-size: 0.85rem; border: 1px solid #dcfce7; }
         .err { background: #fef2f2; color: #991b1b; padding: 1rem; border-radius: 10px; margin-bottom: 1.5rem; font-size: 0.85rem; border: 1px solid #fee2e2; }
-        
+
         label { display: block; font-size: 0.875rem; font-weight: 600; margin-bottom: 0.75rem; color: var(--text-main); }
         input[type=file] { width: 100%; padding: 0.75rem; border: 1px solid var(--border); border-radius: 10px; background: #f9fafb; margin-bottom: 1.5rem; }
         button {
@@ -109,6 +106,7 @@ foreach (['ico', 'png', 'jpg', 'svg'] as $ext) {
         <a href="index.php" class="logo"><span>📣 Admin</span></a>
         <ul class="nav-links">
             <li><a href="index.php"><span>Dashboard</span></a></li>
+			<li><a href="../scan/index.php" target="_blank"><span>Akt. Scan</span></a></li>
             <li><a href="favicon_upload.php" class="active"><span>Fav-Icon</span></a></li>
         </ul>
         <a href="logout.php" class="logout-link"><span>Abmelden</span></a>
@@ -132,8 +130,8 @@ foreach (['ico', 'png', 'jpg', 'svg'] as $ext) {
             <?php if ($currentFavicon): ?>
                 <div class="current-fav">
                     <div class="fav-preview">
-                        <?php 
-                        $mtime = filemtime($uploadDir . basename($currentFavicon)); 
+                        <?php
+                        $mtime = filemtime($uploadDir . basename($currentFavicon));
                         ?>
                         <img src="<?= htmlspecialchars($currentFavicon) ?>?v=<?= $mtime ?>" alt="Fav-Icon">
                     </div>

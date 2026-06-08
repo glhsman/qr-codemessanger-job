@@ -42,6 +42,8 @@ define('ADMIN_PASS_HASH', $secrets['ADMIN_PASS_HASH'] ?? '');
 // Privacy & behavior flags (can be overridden in secrets)
 define('ANONYMIZE_IP', isset($secrets['ANONYMIZE_IP']) ? (bool)$secrets['ANONYMIZE_IP'] : true); // true = store anonymized IPs
 define('ALLOW_HTML_WHITELIST', isset($secrets['ALLOW_HTML_WHITELIST']) ? (bool)$secrets['ALLOW_HTML_WHITELIST'] : true); // allow simple whitelisted HTML in landing message
+define('SCAN_RETENTION_DAYS', max(1, (int)($secrets['SCAN_RETENTION_DAYS'] ?? 30))); // auto-delete scan logs older than N days
+define('SCAN_CONSENT_COOKIE', $secrets['SCAN_CONSENT_COOKIE'] ?? 'scan_ip_consent');
 
 // Session settings
 ini_set('session.cookie_httponly', 1);

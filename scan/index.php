@@ -6,11 +6,36 @@ require_once __DIR__ . '/../lib/sanitize.php';
 // Auto-migrate: ensure schema exists
 ensure_schema();
 
+$consentCookieName = defined('SCAN_CONSENT_COOKIE') ? SCAN_CONSENT_COOKIE : 'scan_ip_consent';
+$consentAction = $_GET['consent'] ?? '';
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['scan_consent'])) {
+    $decision = $_POST['scan_consent'] === 'accept' ? '1' : '0';
+    setcookie($consentCookieName, $decision, [
+        'expires' => time() + (60 * 60 * 24 * 180),
+        'path' => '/',
+        'secure' => (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off'),
+        'httponly' => false,
+        'samesite' => 'Lax'
+    ]);
+    header('Location: ' . strtok($_SERVER['REQUEST_URI'] ?? '/scan/index.php', '?'));
+    exit;
+}
+
+$hasConsentDecision = isset($_COOKIE[$consentCookieName]);
+$hasIpConsent = $hasConsentDecision && $_COOKIE[$consentCookieName] === '1';
+$showConsentBanner = !$hasConsentDecision || $consentAction === 'change';
+
+// Löschfrist für Scan-Logs erzwingen
+purge_old_scans();
+
 // log scan
 $ip = $_SERVER['REMOTE_ADDR'] ?? null;
 $ua = $_SERVER['HTTP_USER_AGENT'] ?? null;
 $ref = $_SERVER['HTTP_REFERER'] ?? null;
-log_scan($ip, $ua, $ref);
+if ($hasIpConsent) {
+  log_scan($ip, $ua, $ref);
+}
 
 // Aktive Meldung laden (zeitgesteuert oder Standard)
 $msg = get_active_message();
@@ -32,8 +57,6 @@ foreach (["ico","png","jpg","svg"] as $ext) {
   }
 }
 ?>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
 <style>
   *, *::before, *::after {
     margin: 0;
@@ -42,7 +65,7 @@ foreach (["ico","png","jpg","svg"] as $ext) {
   }
 
   body {
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
     min-height: 100vh;
     display: flex;
     align-items: center;
@@ -134,6 +157,86 @@ foreach (["ico","png","jpg","svg"] as $ext) {
     animation: pulse 2s infinite;
   }
 
+  .legal-links {
+    margin-top: 1.2rem;
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+    font-size: 0.86rem;
+    flex-wrap: wrap;
+  }
+
+  .legal-links a {
+    color: #4f46e5;
+    text-decoration: none;
+    font-weight: 600;
+  }
+
+  .legal-links a:hover {
+    text-decoration: underline;
+  }
+
+  .consent-state {
+    width: 100%;
+    text-align: center;
+    color: #475569;
+    font-size: 0.82rem;
+    margin-top: 0.1rem;
+  }
+
+  .consent-state a {
+    color: #4f46e5;
+    font-weight: 700;
+  }
+
+  .consent-banner {
+    position: fixed;
+    left: 1rem;
+    right: 1rem;
+    bottom: 1rem;
+    background: rgba(17, 24, 39, 0.96);
+    color: #f9fafb;
+    border-radius: 14px;
+    padding: 1rem;
+    box-shadow: 0 16px 32px rgba(0, 0, 0, 0.3);
+    z-index: 20;
+  }
+
+  .consent-banner p {
+    font-size: 0.9rem;
+    line-height: 1.5;
+    margin-bottom: 0.8rem;
+  }
+
+  .consent-banner a {
+    color: #bfdbfe;
+  }
+
+  .consent-actions {
+    display: flex;
+    gap: 0.6rem;
+    flex-wrap: wrap;
+  }
+
+  .consent-actions button {
+    border: 1px solid transparent;
+    border-radius: 8px;
+    padding: 0.55rem 0.85rem;
+    font-weight: 700;
+    cursor: pointer;
+  }
+
+  .consent-accept {
+    background: #22c55e;
+    color: #052e16;
+  }
+
+  .consent-decline {
+    background: #111827;
+    color: #f9fafb;
+    border-color: #4b5563 !important;
+  }
+
   @keyframes pulse {
     0%, 100% { opacity: 1; transform: scale(1); }
     50%       { opacity: 0.5; transform: scale(0.8); }
@@ -171,10 +274,33 @@ else {
 }
 ?>
       </div>
-
+      <div class="legal-links">
+        <a href="../datenschutz.php" target="_blank" rel="noopener">Datenschutz</a>
+        <a href="../impressum.php" target="_blank" rel="noopener">Impressum</a>
+        <a href="?consent=change">Einwilligung ändern</a>
+        <div class="consent-state">
+          <?php if ($hasConsentDecision): ?>
+            Status: <?= $hasIpConsent ? 'Einwilligung erteilt' : 'Einwilligung abgelehnt' ?>
+          <?php else: ?>
+            Status: Noch keine Entscheidung gespeichert
+          <?php endif; ?>
+        </div>
+      </div>
     </div>
   </div>
 
 </div>
+<?php if ($showConsentBanner): ?>
+  <div class="consent-banner" role="dialog" aria-live="polite" aria-label="Einwilligung zur IP-Speicherung">
+    <p>
+      Wir speichern Ihre IP-Adresse ausschließlich mit Ihrer Einwilligung zur Reichweitenanalyse und löschen Scan-Daten automatisch nach <?= (int)SCAN_RETENTION_DAYS ?> Tagen.
+      Details finden Sie in unserer <a href="../datenschutz.php" target="_blank" rel="noopener">Datenschutzerklärung</a>.
+    </p>
+    <form method="post" class="consent-actions">
+      <button class="consent-accept" type="submit" name="scan_consent" value="accept">Einwilligen</button>
+      <button class="consent-decline" type="submit" name="scan_consent" value="decline">Ablehnen</button>
+    </form>
+  </div>
+<?php endif; ?>
 </body>
 </html>

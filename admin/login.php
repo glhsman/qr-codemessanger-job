@@ -38,9 +38,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     }
     ?>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
             --primary: #667eea;
@@ -51,7 +48,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body {
-            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
             background: var(--bg-body);
             color: var(--text-main);
             display: flex;
@@ -136,11 +133,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <div class="logo">📣</div>
         <h1>Willkommen zurück</h1>
         <p class="subtitle">Bitte melde dich am Admin-Bereich an.</p>
-        
+
         <?php if ($error): ?>
             <div class="error">❌ <?= htmlspecialchars($error) ?></div>
         <?php endif; ?>
-        
+
         <form method="post">
             <label for="password">Passwort</label>
             <input type="password" name="password" id="password" required autofocus>

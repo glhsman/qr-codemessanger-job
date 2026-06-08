@@ -228,6 +228,16 @@ function count_today_scans(): int
     return (int)($pdo->query("SELECT COUNT(*) as cnt FROM `scans` WHERE DATE(ts) = CURDATE()")->fetch()['cnt'] ?? 0);
 }
 
+function purge_old_scans(int $retentionDays = SCAN_RETENTION_DAYS): int
+{
+    $pdo = get_pdo();
+    $days = max(1, $retentionDays);
+    $stmt = $pdo->prepare('DELETE FROM `scans` WHERE `ts` < (NOW() - INTERVAL :days DAY)');
+    $stmt->bindValue(':days', $days, PDO::PARAM_INT);
+    $stmt->execute();
+    return $stmt->rowCount();
+}
+
 // Legacy-Kompatibilität
 function get_setting(string $key): ?string
 {

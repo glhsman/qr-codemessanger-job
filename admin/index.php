@@ -39,10 +39,10 @@ function message_status(array $m, DateTimeImmutable $now): string
     if (!empty($m['active_days'])) {
         $currentDay = (int)$now->format('N'); // 1=Mo, 7=So
         $activeDays = explode(',', $m['active_days']);
-        
+
         $matchToday = in_array((string)$currentDay, $activeDays);
         $matchYesterday = false;
-        
+
         if ($m['daily_start'] && $m['daily_end'] && $m['daily_start'] > $m['daily_end']) {
             $time = $now->format('H:i:s');
             if ($time <= $m['daily_end']) {
@@ -50,7 +50,7 @@ function message_status(array $m, DateTimeImmutable $now): string
                 $matchYesterday = in_array((string)$yesterday, $activeDays);
             }
         }
-        
+
         if (!$matchToday && !$matchYesterday) {
             $daysMatch = false;
         }
@@ -83,7 +83,7 @@ function message_status(array $m, DateTimeImmutable $now): string
         }
         return 'scheduled';
     }
-    
+
     if (!empty($m['active_days'])) {
         return $daysMatch ? 'active' : 'scheduled';
     }
@@ -109,9 +109,6 @@ $wochentageNames = [1=>'Mo', 2=>'Di', 3=>'Mi', 4=>'Do', 5=>'Fr', 6=>'Sa', 7=>'So
         }
     }
     ?>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
             --primary: #667eea;
@@ -127,11 +124,11 @@ $wochentageNames = [1=>'Mo', 2=>'Di', 3=>'Mi', 4=>'Do', 5=>'Fr', 6=>'Sa', 7=>'So
         }
 
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-        body { font-family: 'Inter', system-ui, -apple-system, sans-serif; background: var(--bg-body); color: var(--text-main); min-height: 100vh; display: flex; overflow-x: hidden; }
+        body { font-family: system-ui, -apple-system, 'Segoe UI', sans-serif; background: var(--bg-body); color: var(--text-main); min-height: 100vh; display: flex; overflow-x: hidden; }
 
         /* Sidebar Layout */
         .admin-wrapper { display: flex; width: 100%; min-height: 100vh; }
-        
+
         aside {
             width: 260px;
             background: var(--sidebar-bg);
@@ -146,9 +143,9 @@ $wochentageNames = [1=>'Mo', 2=>'Di', 3=>'Mi', 4=>'Do', 5=>'Fr', 6=>'Sa', 7=>'So
             left: 0;
             z-index: 100;
         }
-        
+
         .logo { font-size: 1.25rem; font-weight: 800; margin-bottom: 2.5rem; display: flex; align-items: center; gap: 0.75rem; color: #fff; text-decoration: none; }
-        
+
         .nav-links { list-style: none; flex: 1; }
         .nav-links li { margin-bottom: 0.5rem; }
         .nav-links a {
@@ -156,7 +153,7 @@ $wochentageNames = [1=>'Mo', 2=>'Di', 3=>'Mi', 4=>'Do', 5=>'Fr', 6=>'Sa', 7=>'So
             color: rgba(255,255,255,0.7); text-decoration: none; border-radius: 8px; font-size: 0.9rem; font-weight: 500; transition: all 0.2s;
         }
         .nav-links a:hover, .nav-links a.active { background: var(--sidebar-hover); color: #fff; }
-        
+
         .logout-link {
             margin-top: auto; padding-top: 1.5rem; border-top: 1px solid rgba(255,255,255,0.1);
             color: #fca5a5; text-decoration: none; font-size: 0.9rem; display: flex; align-items: center; gap: 0.75rem; transition: color 0.2s;
@@ -164,13 +161,13 @@ $wochentageNames = [1=>'Mo', 2=>'Di', 3=>'Mi', 4=>'Do', 5=>'Fr', 6=>'Sa', 7=>'So
         .logout-link:hover { color: #f87171; }
 
         main { flex: 1; margin-left: 260px; padding: 2rem 2.5rem; max-width: 1200px; width: 100%; }
-        
+
         header { margin-bottom: 2.5rem; display: flex; justify-content: space-between; align-items: center; }
         header h1 { font-size: 1.5rem; font-weight: 700; color: var(--text-main); }
 
         .card { background: var(--bg-card); border-radius: 16px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06); padding: 1.5rem; border: 1px solid var(--border); margin-bottom: 1.5rem; }
         .card h2 { font-size: 1.1rem; font-weight: 700; color: var(--text-main); margin-bottom: 1.25rem; display: flex; align-items: center; gap: 0.5rem; }
-        
+
         /* Dashboard Stats */
         .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.25rem; margin-bottom: 2rem; }
         .stat-card { background: #fff; padding: 1.5rem; border-radius: 12px; border: 1px solid var(--border); transition: transform 0.2s; }
@@ -184,7 +181,7 @@ $wochentageNames = [1=>'Mo', 2=>'Di', 3=>'Mi', 4=>'Do', 5=>'Fr', 6=>'Sa', 7=>'So
         .msg-table th { text-align: left; padding: 1rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase; font-size: 0.75rem; letter-spacing: 0.5px; border-bottom: 1px solid var(--border); }
         .msg-table td { padding: 1rem; border-bottom: 1px solid #f9fafb; vertical-align: middle; }
         .msg-table tr:hover td { background: #f9fafb; }
-        
+
         .badge { display: inline-flex; align-items: center; padding: 0.25rem 0.75rem; border-radius: 100px; font-size: 0.75rem; font-weight: 700; letter-spacing: 0.2px; text-transform: uppercase; }
         .badge-standard { background: #eff6ff; color: #1e40af; }
         .badge-active { background: #ecfdf5; color: #065f46; }
@@ -241,7 +238,8 @@ $wochentageNames = [1=>'Mo', 2=>'Di', 3=>'Mi', 4=>'Do', 5=>'Fr', 6=>'Sa', 7=>'So
         </a>
         <ul class="nav-links">
             <li><a href="index.php" class="active"><span>Dashboard</span></a></li>
-            <li><a href="favicon_upload.php"><span>Fav-Icon</span></a></li>
+            <li><a href="../scan/index.php" target="_blank"><span>Akt. Scan</span></a></li>
+			<li><a href="favicon_upload.php"><span>Fav-Icon</span></a></li>
         </ul>
         <a href="logout.php" class="logout-link"><span>Abmelden</span></a>
     </aside>
@@ -358,7 +356,7 @@ $wochentageNames = [1=>'Mo', 2=>'Di', 3=>'Mi', 4=>'Do', 5=>'Fr', 6=>'Sa', 7=>'So
                     ✏️ Sie bearbeiten: <strong><?= htmlspecialchars($editing['title']) ?></strong>
                 </div>
             <?php endif; ?>
-            
+
             <form method="post" action="save.php">
                 <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrf) ?>">
                 <input type="hidden" name="action" value="<?= $editing ? 'edit' : 'add' ?>">
@@ -397,7 +395,7 @@ $wochentageNames = [1=>'Mo', 2=>'Di', 3=>'Mi', 4=>'Do', 5=>'Fr', 6=>'Sa', 7=>'So
                         <input type="datetime-local" name="active_until" value="<?= $editing && $editing['active_until'] ? date('Y-m-d\TH:i', strtotime($editing['active_until'])) : '' ?>">
                     </div>
                 </div>
-                
+
                 <div class="form-grid">
                     <div>
                         <label>Täglich von</label>
@@ -408,11 +406,11 @@ $wochentageNames = [1=>'Mo', 2=>'Di', 3=>'Mi', 4=>'Do', 5=>'Fr', 6=>'Sa', 7=>'So
                         <input type="time" name="daily_end" value="<?= $editing && $editing['daily_end'] ? substr($editing['daily_end'], 0, 5) : '' ?>">
                     </div>
                 </div>
-                
+
                 <div style="margin-bottom: 2rem;">
                     <label>An Wochentagen</label>
                     <div style="display:flex; gap:0.5rem; flex-wrap:wrap; margin-bottom:1rem;">
-                        <?php 
+                        <?php
                         $selDays = $editing && $editing['active_days'] ? explode(',', $editing['active_days']) : [];
                         foreach([1=>'Mo', 2=>'Di', 3=>'Mi', 4=>'Do', 5=>'Fr', 6=>'Sa', 7=>'So'] as $dVal => $dName): ?>
                             <label style="display:inline-flex; align-items:center; background:#fff; padding:0.5rem 0.75rem; border-radius:10px; border:1px solid var(--border); font-size:0.85rem; font-weight:500; cursor:pointer; margin-bottom:0">
@@ -501,7 +499,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const data = await resp.json();
                 livePreviewRender.innerHTML = data.content_html;
                 livePreviewStatus.textContent = data.title + (data.is_default ? ' (Standard)' : ' (Aktiv)');
-                
+
                 // Status color based on is_default
                 if (data.is_default) {
                     livePreviewStatus.style.borderColor = '#9ca3af33';
@@ -526,7 +524,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const textarea = document.getElementById('msg-content');
 
     const preview = document.getElementById('preview-render');
-    
+
     if (textarea && preview) {
         textarea.addEventListener('input', () => {
             const val = textarea.value.trim();
@@ -546,9 +544,9 @@ function insertTag(tagOpen, tagClose) {
     const text = textarea.value;
     const selection = text.substring(start, end);
     const replacement = tagOpen + selection + tagClose;
-    
+
     textarea.value = text.substring(0, start) + replacement + text.substring(end);
-    
+
     // Cursor position setzen
     textarea.focus();
     if (selection.length > 0) {
@@ -556,7 +554,7 @@ function insertTag(tagOpen, tagClose) {
     } else {
         textarea.setSelectionRange(start + tagOpen.length, start + tagOpen.length);
     }
-    
+
     // Preview triggern
     textarea.dispatchEvent(new Event('input'));
 }
