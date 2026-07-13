@@ -20,16 +20,31 @@ if (isset($_GET['edit'])) {
 }
 
 $messages     = get_all_messages();
-$total_scans  = count_all_scans();
-$today_scans  = count_today_scans();
-$recent_scans = get_recent_scans(50);
+$totalScans  = count_all_scans();
+$todayScans  = count_today_scans();
+$recentScans = get_recent_scans(50);
+
+// Aktuelle Zeit für Status-Anzeige
+$now = new DateTimeImmutable('now');
+
+// Abgelaufene/inaktive Meldungen zählen
+$expiredCount = 0;
+$scheduledCount = 0;
+foreach ($messages as $m) {
+    $st = message_status($m, $now);
+    if ($st === 'expired' || $st === 'inactive') $expiredCount++;
+    if ($st === 'scheduled') $scheduledCount++;
+}
 
 $import_error = $_SESSION['import_error'] ?? null;
 $import_success = $_SESSION['import_success'] ?? null;
 unset($_SESSION['import_error'], $_SESSION['import_success']);
 
-// Aktuelle Zeit für Status-Anzeige
-$now = new DateTimeImmutable('now');
+$flash_success = $_SESSION['flash_success'] ?? null;
+$flash_error = $_SESSION['flash_error'] ?? null;
+unset($_SESSION['flash_success'], $_SESSION['flash_error']);
+
+
 
 function message_status(array $m, DateTimeImmutable $now): string
 {
@@ -123,6 +138,33 @@ $wochentageNames = [1=>'Mo', 2=>'Di', 3=>'Mi', 4=>'Do', 5=>'Fr', 6=>'Sa', 7=>'So
             --border: #e5e7eb;
         }
 
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --primary: #818cf8;
+                --secondary: #a78bfa;
+                --sidebar-bg: #111827;
+                --sidebar-hover: #1f2937;
+                --bg-body: #0f172a;
+                --bg-card: #1e293b;
+                --text-main: #f1f5f9;
+                --text-muted: #94a3b8;
+                --accent: #60a5fa;
+                --border: #334155;
+            }
+
+            .card, .stat-card, .live-preview-card { background: var(--bg-card); }
+            .msg-table tr:hover td { background: rgba(255,255,255,0.03); }
+            input[type=text], input[type=datetime-local], input[type=time], textarea, select { background: #0f172a; color: var(--text-main); }
+            .toolbar { background: #0f172a; }
+            .toolbar-btn { background: #1e293b; border-color: var(--border); color: var(--text-main); }
+            .btn-ghost { background: var(--bg-card); color: var(--text-main); border-color: var(--border); }
+            .btn-ghost:hover { background: rgba(255,255,255,0.05); }
+            .modal-card { background: var(--bg-card); }
+            .consent-state { color: var(--text-muted); }
+            #preview-render { background: #0f172a; }
+            .live-preview-content { background: #0f172a; border-color: var(--border); }
+        }
+
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
         body { font-family: system-ui, -apple-system, 'Segoe UI', sans-serif; background: var(--bg-body); color: var(--text-main); min-height: 100vh; display: flex; overflow-x: hidden; }
 
@@ -153,12 +195,14 @@ $wochentageNames = [1=>'Mo', 2=>'Di', 3=>'Mi', 4=>'Do', 5=>'Fr', 6=>'Sa', 7=>'So
             color: rgba(255,255,255,0.7); text-decoration: none; border-radius: 8px; font-size: 0.9rem; font-weight: 500; transition: all 0.2s;
         }
         .nav-links a:hover, .nav-links a.active { background: var(--sidebar-hover); color: #fff; }
+        .nav-links svg { width: 18px; height: 18px; flex-shrink: 0; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
 
         .logout-link {
             margin-top: auto; padding-top: 1.5rem; border-top: 1px solid rgba(255,255,255,0.1);
             color: #fca5a5; text-decoration: none; font-size: 0.9rem; display: flex; align-items: center; gap: 0.75rem; transition: color 0.2s;
         }
         .logout-link:hover { color: #f87171; }
+        .logout-link svg { width: 18px; height: 18px; flex-shrink: 0; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
 
         main { flex: 1; margin-left: 260px; padding: 2rem 2.5rem; max-width: 1200px; width: 100%; }
 
@@ -237,11 +281,11 @@ $wochentageNames = [1=>'Mo', 2=>'Di', 3=>'Mi', 4=>'Do', 5=>'Fr', 6=>'Sa', 7=>'So
             <span>📣 Admin</span>
         </a>
         <ul class="nav-links">
-            <li><a href="index.php" class="active"><span>Dashboard</span></a></li>
-            <li><a href="../scan/index.php" target="_blank"><span>Akt. Scan</span></a></li>
-			<li><a href="favicon_upload.php"><span>Fav-Icon</span></a></li>
+            <li><a href="index.php" class="active"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg><span>Dashboard</span></a></li>
+            <li><a href="../scan/index.php" target="_blank"><svg viewBox="0 0 24 24"><path d="M6 9l6-6 6 6"/><path d="M6 15l6 6 6-6"/></svg><span>Akt. Scan</span></a></li>
+			<li><a href="favicon_upload.php"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 1v2m0 18v2M4.22 4.22l1.42 1.42m12.72 12.72l1.42 1.42M1 12h2m18 0h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg><span>Settings</span></a></li>
         </ul>
-        <a href="logout.php" class="logout-link"><span>Abmelden</span></a>
+        <a href="logout.php" class="logout-link"><svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg><span>Abmelden</span></a>
     </aside>
 
     <main>
@@ -251,6 +295,19 @@ $wochentageNames = [1=>'Mo', 2=>'Di', 3=>'Mi', 4=>'Do', 5=>'Fr', 6=>'Sa', 7=>'So
                 <?= $now->format('d.m.Y H:i') ?>
             </div>
         </header>
+
+        <?php if ($flash_success): ?>
+            <div style="background:#f0fdf4; color:#166534; padding:1rem 1.25rem; border-radius:12px; margin-bottom:1.5rem; font-size:0.875rem; border:1px solid #dcfce7; display:flex; justify-content:space-between; align-items:center">
+                <span>✅ <?= htmlspecialchars($flash_success) ?></span>
+                <button onclick="this.parentElement.remove()" style="background:none;border:none;color:#166534;cursor:pointer;font-size:1.1rem;padding:0 0.25rem">&times;</button>
+            </div>
+        <?php endif; ?>
+        <?php if ($flash_error): ?>
+            <div style="background:#fef2f2; color:#991b1b; padding:1rem 1.25rem; border-radius:12px; margin-bottom:1.5rem; font-size:0.875rem; border:1px solid #fee2e2; display:flex; justify-content:space-between; align-items:center">
+                <span>❌ <?= htmlspecialchars($flash_error) ?></span>
+                <button onclick="this.parentElement.remove()" style="background:none;border:none;color:#991b1b;cursor:pointer;font-size:1.1rem;padding:0 0.25rem">&times;</button>
+            </div>
+        <?php endif; ?>
 
         <!-- Live Dashboard Preview -->
         <div class="card" id="live-dashboard-preview" style="background: linear-gradient(135deg, rgba(102, 126, 234, 0.05), rgba(118, 75, 162, 0.05)); border-color: rgba(102, 126, 234, 0.2);">
@@ -266,11 +323,11 @@ $wochentageNames = [1=>'Mo', 2=>'Di', 3=>'Mi', 4=>'Do', 5=>'Fr', 6=>'Sa', 7=>'So
         <!-- Statistiken -->
         <div class="stats-grid">
             <div class="stat-card">
-                <div class="stat-val"><?= $total_scans ?></div>
+                <div class="stat-val"><?= $totalScans ?></div>
                 <div class="stat-lbl">Scans gesamt</div>
             </div>
             <div class="stat-card">
-                <div class="stat-val"><?= $today_scans ?></div>
+                <div class="stat-val"><?= $todayScans ?></div>
                 <div class="stat-lbl">Scans heute</div>
             </div>
             <div class="stat-card">
@@ -278,6 +335,17 @@ $wochentageNames = [1=>'Mo', 2=>'Di', 3=>'Mi', 4=>'Do', 5=>'Fr', 6=>'Sa', 7=>'So
                 <div class="stat-lbl">Meldungen</div>
             </div>
         </div>
+
+        <?php if ($expiredCount > 0 || $scheduledCount > 0): ?>
+        <div style="display:flex; gap:0.75rem; margin-bottom:1.5rem; flex-wrap:wrap">
+            <?php if ($expiredCount > 0): ?>
+                <a href="?filter=expired" class="badge badge-expired" style="text-decoration:none;padding:0.4rem 1rem;font-size:0.8rem;cursor:pointer" onclick="document.getElementById('msg-status-filter').value='expired';filterMessages()">⚠ <?= $expiredCount ?> abgelaufen</a>
+            <?php endif; ?>
+            <?php if ($scheduledCount > 0): ?>
+                <a href="?filter=scheduled" class="badge badge-scheduled" style="text-decoration:none;padding:0.4rem 1rem;font-size:0.8rem;cursor:pointer" onclick="document.getElementById('msg-status-filter').value='scheduled';filterMessages()">⏰ <?= $scheduledCount ?> geplant</a>
+            <?php endif; ?>
+        </div>
+        <?php endif; ?>
 
         <!-- Meldungsverwaltung -->
         <div class="card">
@@ -287,6 +355,18 @@ $wochentageNames = [1=>'Mo', 2=>'Di', 3=>'Mi', 4=>'Do', 5=>'Fr', 6=>'Sa', 7=>'So
                     <a href="export_messages.php" class="btn btn-ghost">📥 Export</a>
                     <button onclick="document.getElementById('import-form').style.display='flex'" class="btn btn-ghost">📤 Import</button>
                 </div>
+            </div>
+
+            <div style="display:flex; gap:0.75rem; margin-bottom:1.25rem; flex-wrap:wrap; align-items:center">
+                <input type="text" id="msg-search" placeholder="Suche nach Titel..." style="width:auto; min-width:220px; margin-bottom:0; flex:1" oninput="filterMessages()">
+                <select id="msg-status-filter" style="width:auto; margin-bottom:0; min-width:160px" onchange="filterMessages()">
+                    <option value="all">Alle Status</option>
+                    <option value="standard">Standard</option>
+                    <option value="active">Aktiv</option>
+                    <option value="scheduled">Geplant</option>
+                    <option value="expired">Abgelaufen</option>
+                    <option value="inactive">Inaktiv</option>
+                </select>
             </div>
 
             <?php if ($import_error): ?>
@@ -307,7 +387,7 @@ $wochentageNames = [1=>'Mo', 2=>'Di', 3=>'Mi', 4=>'Do', 5=>'Fr', 6=>'Sa', 7=>'So
                     <?php foreach ($messages as $m):
                         $st = message_status($m, $now);
                     ?>
-                    <tr>
+                    <tr data-status="<?= htmlspecialchars($st) ?>" data-title="<?= htmlspecialchars(strtolower($m['title'])) ?>">
                         <td style="font-weight: 600"><?= htmlspecialchars($m['title']) ?></td>
                         <td>
                             <span class="badge badge-<?= $st ?>">
@@ -327,7 +407,7 @@ $wochentageNames = [1=>'Mo', 2=>'Di', 3=>'Mi', 4=>'Do', 5=>'Fr', 6=>'Sa', 7=>'So
                                 <button class="btn btn-ghost" style="padding:0.3rem 0.6rem; font-size:0.75rem" onclick="openPreview(this)" data-content="<?= htmlspecialchars($m['content']) ?>">Vorschau</button>
                                 <a class="btn btn-ghost" style="padding:0.3rem 0.6rem; font-size:0.75rem" href="?edit=<?= $m['id'] ?>">Bearbeiten</a>
                                 <?php if (!$m['is_default']): ?>
-                                    <form method="post" action="save.php" style="display:inline">
+                                    <form method="post" action="save.php" style="display:inline" onsubmit="return confirm('Diese Meldung als Standard festlegen?')">
                                         <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrf) ?>">
                                         <input type="hidden" name="action" value="set_default">
                                         <input type="hidden" name="id" value="<?= $m['id'] ?>">
@@ -359,6 +439,7 @@ $wochentageNames = [1=>'Mo', 2=>'Di', 3=>'Mi', 4=>'Do', 5=>'Fr', 6=>'Sa', 7=>'So
 
             <form method="post" action="save.php">
                 <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrf) ?>">
+                <input type="hidden" name="scroll_position" id="scroll_position" value="0">
                 <input type="hidden" name="action" value="<?= $editing ? 'edit' : 'add' ?>">
                 <?php if ($editing): ?>
                     <input type="hidden" name="id" value="<?= $editing['id'] ?>">
@@ -381,7 +462,11 @@ $wochentageNames = [1=>'Mo', 2=>'Di', 3=>'Mi', 4=>'Do', 5=>'Fr', 6=>'Sa', 7=>'So
                 <div style="margin: 1.5rem 0; padding: 1.25rem; background: #fafafa; border-radius: 12px; border: 1px solid var(--border)">
                     <span style="font-size:0.75rem; font-weight:700; color:var(--text-muted); text-transform:uppercase; display:block; margin-bottom:0.75rem">Live-Vorschau</span>
                     <div id="preview-render" style="background:#fff; padding:1rem; border-radius:8px; border:1px solid var(--border); min-height:60px">
-                        <?= $editing ? $editing['content'] : '<i>Ihre Nachricht erscheint hier...</i>' ?>
+                        <?php if ($editing): ?>
+                            <?= defined('ALLOW_HTML_WHITELIST') && ALLOW_HTML_WHITELIST ? sanitize_html_whitelist($editing['content']) : nl2br(htmlspecialchars($editing['content'], ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8')) ?>
+                        <?php else: ?>
+                            <i>Ihre Nachricht erscheint hier...</i>
+                        <?php endif; ?>
                     </div>
                 </div>
 
@@ -442,7 +527,7 @@ $wochentageNames = [1=>'Mo', 2=>'Di', 3=>'Mi', 4=>'Do', 5=>'Fr', 6=>'Sa', 7=>'So
                 <table class="msg-table">
                     <thead><tr><th>Zeitstempel</th><th>IP-Adresse</th><th>User Agent</th></tr></thead>
                     <tbody>
-                    <?php foreach ($recent_scans as $s): ?>
+                    <?php foreach ($recentScans as $s): ?>
                     <tr>
                         <td style="white-space:nowrap"><?= date('d.m.Y H:i:s', strtotime($s['ts'])) ?></td>
                         <td style="font-family:monospace; font-size:0.8rem"><?= htmlspecialchars($s['ip'] ?? '—') ?></td>
@@ -455,6 +540,8 @@ $wochentageNames = [1=>'Mo', 2=>'Di', 3=>'Mi', 4=>'Do', 5=>'Fr', 6=>'Sa', 7=>'So
                 </table>
             </div>
         </div>
+
+
     </main>
 </div>
 
@@ -486,6 +573,21 @@ $wochentageNames = [1=>'Mo', 2=>'Di', 3=>'Mi', 4=>'Do', 5=>'Fr', 6=>'Sa', 7=>'So
 
 <script>
 document.addEventListener('DOMContentLoaded', () => {
+    // Scroll position restoration
+    const savedScroll = <?= $_SESSION['scroll_position'] ?? 0 ?>;
+    if (savedScroll > 0) {
+        window.scrollTo(0, savedScroll);
+        <?php unset($_SESSION['scroll_position']); ?>
+    }
+
+    // Save scroll position before form submit
+    document.querySelectorAll('form[method="post"]').forEach(form => {
+        form.addEventListener('submit', () => {
+            const input = document.getElementById('scroll_position');
+            if (input) input.value = window.scrollY;
+        });
+    });
+
     // Live Dashboard Preview Logic
     const livePreviewRender = document.getElementById('live-preview-render');
     const livePreviewStatus = document.getElementById('live-preview-status');
@@ -531,9 +633,47 @@ document.addEventListener('DOMContentLoaded', () => {
             if (val === '') {
                 preview.innerHTML = '<i>Ihre Nachricht erscheint hier...</i>';
             } else {
-                preview.innerHTML = val;
+                // Sanitize: only allow whitelisted tags (same as ALLOW_HTML_WHITELIST)
+                const sanitized = sanitizeForPreview(val);
+                preview.innerHTML = sanitized;
             }
         });
+    }
+
+    function sanitizeForPreview(html) {
+        const allowedTags = ['p', 'br', 'b', 'strong', 'i', 'em', 'a', 'h1', 'h2'];
+        const div = document.createElement('div');
+        div.innerHTML = html;
+        return processNode(div, allowedTags).trim();
+    }
+
+    function processNode(node, allowedTags) {
+        if (node.nodeType === 3) {
+            return node.textContent.replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        }
+        if (node.nodeType !== 1) return '';
+        const tag = node.nodeName.toLowerCase();
+        if (!allowedTags.includes(tag)) {
+            let s = '';
+            for (const child of node.childNodes) s += processNode(child, allowedTags);
+            return s;
+        }
+        let attrs = '';
+        if (tag === 'a') {
+            const href = node.getAttribute('href') || '';
+            const validProtocols = ['http://', 'https://', 'mailto:', 'tel:', '/'];
+            const valid = validProtocols.some(p => href.toLowerCase().startsWith(p));
+            if (valid) {
+                attrs = ' href="' + href.replace(/"/g, '&quot;') + '" rel="noopener noreferrer"';
+            } else {
+                let s = '';
+                for (const child of node.childNodes) s += processNode(child, allowedTags);
+                return s;
+            }
+        }
+        let inner = '';
+        for (const child of node.childNodes) inner += processNode(child, allowedTags);
+        return '<' + tag + attrs + '>' + inner + '</' + tag + '>';
     }
 });
 
@@ -581,6 +721,29 @@ function closePreview() {
 function checkDays(daysArray) {
     document.querySelectorAll('.day-cb').forEach(cb => {
         cb.checked = daysArray.includes(parseInt(cb.value));
+    });
+}
+
+function filterMessages() {
+    const search = document.getElementById('msg-search').value.toLowerCase().trim();
+    const statusFilter = document.getElementById('msg-status-filter').value;
+    const rows = document.querySelectorAll('.msg-table tbody tr');
+
+    rows.forEach(row => {
+        const title = row.getAttribute('data-title') || '';
+        const status = row.getAttribute('data-status') || '';
+
+        let show = true;
+
+        if (search && !title.includes(search)) {
+            show = false;
+        }
+
+        if (statusFilter !== 'all' && status !== statusFilter) {
+            show = false;
+        }
+
+        row.style.display = show ? '' : 'none';
     });
 }
 </script>

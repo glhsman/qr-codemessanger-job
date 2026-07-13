@@ -31,9 +31,13 @@ switch ($action) {
         $active_days = is_array($active_days_arr) && !empty($active_days_arr) ? implode(',', $active_days_arr) : '';
         if ($title && $content) {
             upsert_message(0, $title, $content, $from ?: null, $until ?: null, $daily_start ?: null, $daily_end ?: null, $active_days ?: null);
+            $_SESSION['flash_success'] = 'Meldung "' . htmlspecialchars($title) . '" wurde erstellt.';
+        } else {
+            $_SESSION['flash_error'] = 'Titel und Inhalt dürfen nicht leer sein.';
         }
+        $_SESSION['scroll_position'] = (int)($_POST['scroll_position'] ?? 0);
         header('Location: ' . BASE_URL . '/admin/');
-        break;
+        exit;
 
     case 'edit':
         $title = trim($_POST['title'] ?? '');
@@ -46,24 +50,58 @@ switch ($action) {
         $active_days = is_array($active_days_arr) && !empty($active_days_arr) ? implode(',', $active_days_arr) : '';
         if ($id && $title && $content) {
             upsert_message($id, $title, $content, $from ?: null, $until ?: null, $daily_start ?: null, $daily_end ?: null, $active_days ?: null);
+            $_SESSION['flash_success'] = 'Meldung "' . htmlspecialchars($title) . '" wurde aktualisiert.';
+        } else {
+            $_SESSION['flash_error'] = 'Titel und Inhalt dürfen nicht leer sein.';
         }
+        $_SESSION['scroll_position'] = (int)($_POST['scroll_position'] ?? 0);
         header('Location: ' . BASE_URL . '/admin/');
-        break;
+        exit;
 
     case 'delete':
-        if ($id)
+        if ($id) {
+            $msg = get_message($id);
+            $msgTitle = $msg ? $msg['title'] : 'Unbekannt';
             delete_message($id);
+            $_SESSION['flash_success'] = 'Meldung "' . htmlspecialchars($msgTitle) . '" wurde gelöscht.';
+        }
+        $_SESSION['scroll_position'] = (int)($_POST['scroll_position'] ?? 0);
         header('Location: ' . BASE_URL . '/admin/');
-        break;
+        exit;
 
     case 'set_default':
-        if ($id)
+        if ($id) {
+            $msg = get_message($id);
+            $msgTitle = $msg ? $msg['title'] : 'Unbekannt';
             set_default_message($id);
+            $_SESSION['flash_success'] = '"' . htmlspecialchars($msgTitle) . '" ist jetzt die Standard-Meldung.';
+        }
         header('Location: ' . BASE_URL . '/admin/');
-        break;
+        exit;
+
+    case 'save_branding':
+        $bTitle = trim($_POST['brand_title'] ?? '');
+        $bLogo = trim($_POST['brand_logo_url'] ?? '');
+        if ($bTitle) {
+            set_setting('brand_title', $bTitle);
+        } else {
+            set_setting('brand_title', 'Für dich');
+        }
+        if ($bLogo) {
+            // Only allow http/https URLs
+            if (preg_match('/^https?:\/\/.+/i', $bLogo)) {
+                set_setting('brand_logo_url', $bLogo);
+            }
+        } else {
+            set_setting('brand_logo_url', '');
+        }
+        $_SESSION['brand_save_msg'] = 'Branding wurde gespeichert.';
+        header('Location: ' . BASE_URL . '/admin/');
+        exit;
 
     default:
         header('Location: ' . BASE_URL . '/admin/');
+        exit;
 }
 exit;
 ?>

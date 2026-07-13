@@ -39,6 +39,26 @@ if ($hasIpConsent) {
 
 // Aktive Meldung laden (zeitgesteuert oder Standard)
 $msg = get_active_message();
+$msgContent = $msg['content'];
+$msgCreatedAt = $msg['created_at'] ?? null;
+
+// Branding laden
+$brandTitle = get_setting('brand_title');
+$brandLogoUrl = null;
+// Lokales Logo bevorzugen (admin/logo/logo.*)
+foreach (['png', 'jpg', 'svg', 'webp'] as $_ext) {
+    if (file_exists(__DIR__ . '/../admin/logo/logo.' . $_ext)) {
+        $brandLogoUrl = '../admin/logo/logo.' . $_ext . '?v=' . filemtime(__DIR__ . '/../admin/logo/logo.' . $_ext);
+        break;
+    }
+}
+// Fallback: URL aus Settings
+if (!$brandLogoUrl) {
+    $brandLogoUrl = get_setting('brand_logo_url');
+}
+if (!$brandTitle) {
+    $brandTitle = 'Für dich';
+}
 
 // output
 header('Content-Type: text/html; charset=UTF-8');
@@ -73,6 +93,10 @@ foreach (["ico","png","jpg","svg"] as $ext) {
     padding: 1.5rem;
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     background-attachment: fixed;
+  }
+
+  body.has-consent-banner {
+    padding-bottom: calc(1.5rem + 140px);
   }
 
   .container {
@@ -250,6 +274,14 @@ foreach (["ico","png","jpg","svg"] as $ext) {
   @media (max-width: 480px) {
     .card-body { padding: 1.5rem 1.4rem 1.8rem; }
     .message   { font-size: 1.1rem; }
+    .consent-banner {
+      left: 0.5rem;
+      right: 0.5rem;
+      bottom: 0.5rem;
+      padding: 0.8rem;
+    }
+    .consent-banner p { font-size: 0.82rem; }
+    .consent-actions button { padding: 0.5rem 0.65rem; font-size: 0.85rem; }
   }
 </style>
 </head>
@@ -260,23 +292,31 @@ foreach (["ico","png","jpg","svg"] as $ext) {
 
   <div class="card">
     <div class="card-header">
+      <?php if ($brandLogoUrl): ?>
+      <img src="<?= htmlspecialchars($brandLogoUrl) ?>" alt="" style="width:28px;height:28px;border-radius:6px;object-fit:cover;background:#fff">
+      <?php endif; ?>
       <span class="badge">📣 Nachricht</span>
-      <h1>Für dich</h1>
+      <h1><?= htmlspecialchars($brandTitle) ?></h1>
     </div>
     <div class="card-body">
       <div class="message">
         <?php
 if (defined('ALLOW_HTML_WHITELIST') && ALLOW_HTML_WHITELIST) {
-  echo sanitize_html_whitelist($msg);
+  echo sanitize_html_whitelist($msgContent);
 }
 else {
-  echo nl2br(htmlspecialchars($msg, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8'));
+  echo nl2br(htmlspecialchars($msgContent, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8'));
 }
 ?>
       </div>
+      <?php if ($msgCreatedAt): ?>
+      <div style="text-align:center; margin-top:1rem; font-size:0.75rem; color:#bbb;">
+        Aktualisiert am <?= date('d.m.Y H:i', strtotime($msgCreatedAt)) ?> Uhr
+      </div>
+      <?php endif; ?>
       <div class="legal-links">
-        <a href="../datenschutz.php" target="_blank" rel="noopener">Datenschutz</a>
-        <a href="../impressum.php" target="_blank" rel="noopener">Impressum</a>
+        <a href="../datenschutz.php" rel="noopener">Datenschutz</a>
+        <a href="../impressum.php" rel="noopener">Impressum</a>
         <a href="?consent=change">Einwilligung ändern</a>
         <div class="consent-state">
           <?php if ($hasConsentDecision): ?>
@@ -291,6 +331,7 @@ else {
 
 </div>
 <?php if ($showConsentBanner): ?>
+  <script>document.body.classList.add('has-consent-banner');</script>
   <div class="consent-banner" role="dialog" aria-live="polite" aria-label="Einwilligung zur IP-Speicherung">
     <p>
       Wir speichern Ihre IP-Adresse ausschließlich mit Ihrer Einwilligung zur Reichweitenanalyse und löschen Scan-Daten automatisch nach <?= (int)SCAN_RETENTION_DAYS ?> Tagen.
