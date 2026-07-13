@@ -3,7 +3,8 @@
 
 function sanitize_html_whitelist(string $html): string
 {
-    $allowed_tags = ['p', 'br', 'b', 'strong', 'i', 'em', 'a', 'h1', 'h2'];
+    $allowed_tags = ['p', 'br', 'b', 'strong', 'i', 'em', 'a', 'h1', 'h2', 'h3', 'u', 's', 'del', 'ul', 'ol', 'li', 'hr', 'mark', 'small', 'blockquote'];
+    $self_closing = ['br', 'hr'];
     // strip all tags except allowed
     $doc = new DOMDocument();
     libxml_use_internal_errors(true);
@@ -13,12 +14,12 @@ function sanitize_html_whitelist(string $html): string
     $body = $doc->getElementsByTagName('body')->item(0);
     $out = '';
     foreach ($body->childNodes as $node) {
-        $out .= process_node($node, $allowed_tags);
+        $out .= process_node($node, $allowed_tags, $self_closing);
     }
     return $out;
 }
 
-function process_node($node, $allowed_tags)
+function process_node($node, $allowed_tags, $self_closing = [])
 {
     if ($node->nodeType === XML_TEXT_NODE) {
         return htmlspecialchars($node->nodeValue, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
@@ -31,8 +32,12 @@ function process_node($node, $allowed_tags)
         // unwrap children
         $s = '';
         foreach ($node->childNodes as $c)
-            $s .= process_node($c, $allowed_tags);
+            $s .= process_node($c, $allowed_tags, $self_closing);
         return $s;
+    }
+    // Self-closing tags
+    if (in_array($tag, $self_closing, true)) {
+        return "<{$tag}>";
     }
     $attrs = '';
     if ($tag === 'a' && $node->hasAttributes()) {
@@ -51,7 +56,7 @@ function process_node($node, $allowed_tags)
     }
     $inner = '';
     foreach ($node->childNodes as $c)
-        $inner .= process_node($c, $allowed_tags);
+        $inner .= process_node($c, $allowed_tags, $self_closing);
     return "<{$tag}{$attrs}>{$inner}</{$tag}>";
 }
-?>
+?>

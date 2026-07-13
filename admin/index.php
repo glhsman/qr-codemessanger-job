@@ -259,9 +259,21 @@ $wochentageNames = [1=>'Mo', 2=>'Di', 3=>'Mi', 4=>'Do', 5=>'Fr', 6=>'Sa', 7=>'So
         .refresh-dot::after { content: ''; position: absolute; width: 100%; height: 100%; border-radius: 50%; background: inherit; animation: pulse 1.5s infinite; }
         @keyframes pulse { 0% { opacity: 0.8; transform: scale(1); } 100% { opacity: 0; transform: scale(3); } }
 
-        .toolbar { display: flex; gap: 0.4rem; background: #f9fafb; padding: 0.6rem; border: 1px solid var(--border); border-bottom: none; border-radius: 10px 10px 0 0; }
-        .toolbar-btn { background: #fff; border: 1px solid var(--border); border-radius: 6px; padding: 0.4rem 0.6rem; font-size: 0.8rem; font-weight: 700; cursor: pointer; transition: all 0.2s; }
+        .toolbar { display: flex; gap: 0.3rem; background: #f9fafb; padding: 0.5rem; border: 1px solid var(--border); border-bottom: none; border-radius: 10px 10px 0 0; flex-wrap: wrap; align-items: center; }
+        .toolbar-sep { width: 1px; height: 1.4rem; background: var(--border); margin: 0 0.15rem; flex-shrink: 0; }
+        .toolbar-btn { background: #fff; border: 1px solid var(--border); border-radius: 6px; padding: 0.35rem 0.55rem; font-size: 0.78rem; font-weight: 700; cursor: pointer; transition: all 0.2s; line-height: 1; position: relative; }
         .toolbar-btn:hover { border-color: var(--primary); color: var(--primary); }
+        .toolbar-btn[title]::after { content: attr(title); position: absolute; bottom: calc(100% + 6px); left: 50%; transform: translateX(-50%); background: #1f2937; color: #fff; font-size: 0.68rem; font-weight: 500; padding: 0.25rem 0.5rem; border-radius: 4px; white-space: nowrap; opacity: 0; pointer-events: none; transition: opacity 0.15s; }
+        .toolbar-btn:hover[title]::after { opacity: 1; }
+        .emoji-picker { position: absolute; top: calc(100% + 4px); left: 0; background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; padding: 0.75rem; box-shadow: 0 8px 24px rgba(0,0,0,0.15); z-index: 50; display: none; width: 280px; }
+        .emoji-picker.open { display: block; }
+        .emoji-grid { display: grid; grid-template-columns: repeat(8, 1fr); gap: 0.25rem; }
+        .emoji-grid button { background: none; border: none; font-size: 1.25rem; padding: 0.3rem; border-radius: 6px; cursor: pointer; transition: background 0.15s; line-height: 1; }
+        .emoji-grid button:hover { background: rgba(102, 126, 234, 0.12); }
+        .tpl-dropdown { position: absolute; top: calc(100% + 4px); right: 0; background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; padding: 0.5rem; box-shadow: 0 8px 24px rgba(0,0,0,0.15); z-index: 50; display: none; min-width: 240px; }
+        .tpl-dropdown.open { display: block; }
+        .tpl-dropdown button { display: block; width: 100%; text-align: left; background: none; border: none; padding: 0.6rem 0.75rem; border-radius: 8px; font-size: 0.82rem; cursor: pointer; color: var(--text-main); transition: background 0.15s; font-weight: 500; }
+        .tpl-dropdown button:hover { background: rgba(102, 126, 234, 0.08); }
 
         .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 200; align-items: center; justify-content: center; backdrop-filter: blur(4px); }
         .modal-card { background: #fff; width: 95%; max-width: 550px; border-radius: 20px; padding: 2.5rem; position: relative; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1); }
@@ -450,12 +462,55 @@ $wochentageNames = [1=>'Mo', 2=>'Di', 3=>'Mi', 4=>'Do', 5=>'Fr', 6=>'Sa', 7=>'So
 
                 <label>Meldungstext <span style="font-weight:400; color:var(--text-muted)">(HTML erlaubt)</span></label>
                 <div class="toolbar">
-                    <button type="button" class="toolbar-btn" onclick="insertTag('<h1>', '</h1>')">H1</button>
-                    <button type="button" class="toolbar-btn" onclick="insertTag('<h2>', '</h2>')">H2</button>
-                    <button type="button" class="toolbar-btn" onclick="insertTag('<b>', '</b>')"><b>B</b></button>
-                    <button type="button" class="toolbar-btn" onclick="insertTag('<i>', '</i>')"><i>I</i></button>
-                    <button type="button" class="toolbar-btn" onclick="insertLink()">🔗</button>
-                    <button type="button" class="toolbar-btn" onclick="insertTag('<p>', '</p>')">¶</button>
+                    <!-- Überschriften -->
+                    <button type="button" class="toolbar-btn" onclick="insertTag('<h1>', '</h1>')" title="Überschrift 1">H1</button>
+                    <button type="button" class="toolbar-btn" onclick="insertTag('<h2>', '</h2>')" title="Überschrift 2">H2</button>
+                    <button type="button" class="toolbar-btn" onclick="insertTag('<h3>', '</h3>')" title="Überschrift 3">H3</button>
+                    <div class="toolbar-sep"></div>
+                    <!-- Textformatierung -->
+                    <button type="button" class="toolbar-btn" onclick="insertTag('<b>', '</b>')" title="Fett"><b>B</b></button>
+                    <button type="button" class="toolbar-btn" onclick="insertTag('<i>', '</i>')" title="Kursiv"><i>I</i></button>
+                    <button type="button" class="toolbar-btn" onclick="insertTag('<u>', '</u>')" title="Unterstrichen" style="text-decoration:underline">U</button>
+                    <button type="button" class="toolbar-btn" onclick="insertTag('<s>', '</s>')" title="Durchgestrichen" style="text-decoration:line-through">S</button>
+                    <button type="button" class="toolbar-btn" onclick="insertTag('<mark>', '</mark>')" title="Hervorheben">🖍</button>
+                    <button type="button" class="toolbar-btn" onclick="insertTag('<small>', '</small>')" title="Kleiner Text" style="font-size:0.65rem">sm</button>
+                    <div class="toolbar-sep"></div>
+                    <!-- Struktur -->
+                    <button type="button" class="toolbar-btn" onclick="insertTag('<p>', '</p>')" title="Absatz">¶</button>
+                    <button type="button" class="toolbar-btn" onclick="insertAtCursor('<br>')" title="Zeilenumbruch">↵</button>
+                    <button type="button" class="toolbar-btn" onclick="insertAtCursor('<hr>')" title="Trennlinie">―</button>
+                    <button type="button" class="toolbar-btn" onclick="insertTag('<blockquote>', '</blockquote>')" title="Zitat">❝</button>
+                    <div class="toolbar-sep"></div>
+                    <!-- Listen -->
+                    <button type="button" class="toolbar-btn" onclick="insertList('ul')" title="Aufzählung">• ≡</button>
+                    <button type="button" class="toolbar-btn" onclick="insertList('ol')" title="Nummerierung">1. ≡</button>
+                    <div class="toolbar-sep"></div>
+                    <!-- Link -->
+                    <button type="button" class="toolbar-btn" onclick="insertLink()" title="Link einfügen">🔗</button>
+                    <div class="toolbar-sep"></div>
+                    <!-- Emoji -->
+                    <span style="position:relative">
+                        <button type="button" class="toolbar-btn" onclick="toggleEmojiPicker(event)" title="Emoji">😊</button>
+                        <div id="emoji-picker" class="emoji-picker">
+                            <div class="emoji-grid">
+                                <?php foreach(['📢','📣','✅','❌','⚠️','ℹ️','❤️','👋','🎉','🔔','⏰','📍','☎️','📧','🏠','🔑','🚗','🛒','🍕','☕','🌟','⭐','💡','🔧','📝','📌'] as $e): ?>
+                                    <button type="button" onclick="insertEmoji('<?= $e ?>')"><?= $e ?></button>
+                                <?php endforeach; ?>
+                            </div>
+                        </div>
+                    </span>
+                    <!-- Vorlagen -->
+                    <span style="position:relative">
+                        <button type="button" class="toolbar-btn" onclick="toggleTemplates(event)" title="Vorlage einfügen">📋</button>
+                        <div id="tpl-dropdown" class="tpl-dropdown">
+                            <button type="button" onclick="insertTemplate('absent')">🚪 Abwesend bis …</button>
+                            <button type="button" onclick="insertTemplate('meeting')">📅 Bin im Meeting</button>
+                            <button type="button" onclick="insertTemplate('erreichbar')">☎️ Erreichbar unter …</button>
+                            <button type="button" onclick="insertTemplate('pause')">☕ In der Pause</button>
+                            <button type="button" onclick="insertTemplate('homeoffice')">🏠 Im Homeoffice</button>
+                            <button type="button" onclick="insertTemplate('urlaub')">🌴 Im Urlaub</button>
+                        </div>
+                    </span>
                 </div>
                 <textarea name="content" id="msg-content" required><?= $editing ? htmlspecialchars($editing['content']) : '' ?></textarea>
 
@@ -641,13 +696,14 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function sanitizeForPreview(html) {
-        const allowedTags = ['p', 'br', 'b', 'strong', 'i', 'em', 'a', 'h1', 'h2'];
+        const allowedTags = ['p', 'br', 'b', 'strong', 'i', 'em', 'a', 'h1', 'h2', 'h3', 'u', 's', 'del', 'ul', 'ol', 'li', 'hr', 'mark', 'small', 'blockquote'];
+        const selfClosing = ['br', 'hr'];
         const div = document.createElement('div');
         div.innerHTML = html;
-        return processNode(div, allowedTags).trim();
+        return processNode(div, allowedTags, selfClosing).trim();
     }
 
-    function processNode(node, allowedTags) {
+    function processNode(node, allowedTags, selfClosing) {
         if (node.nodeType === 3) {
             return node.textContent.replace(/</g, '&lt;').replace(/>/g, '&gt;');
         }
@@ -655,9 +711,10 @@ document.addEventListener('DOMContentLoaded', () => {
         const tag = node.nodeName.toLowerCase();
         if (!allowedTags.includes(tag)) {
             let s = '';
-            for (const child of node.childNodes) s += processNode(child, allowedTags);
+            for (const child of node.childNodes) s += processNode(child, allowedTags, selfClosing);
             return s;
         }
+        if (selfClosing.includes(tag)) return '<' + tag + '>';
         let attrs = '';
         if (tag === 'a') {
             const href = node.getAttribute('href') || '';
@@ -667,12 +724,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 attrs = ' href="' + href.replace(/"/g, '&quot;') + '" rel="noopener noreferrer"';
             } else {
                 let s = '';
-                for (const child of node.childNodes) s += processNode(child, allowedTags);
+                for (const child of node.childNodes) s += processNode(child, allowedTags, selfClosing);
                 return s;
             }
         }
         let inner = '';
-        for (const child of node.childNodes) inner += processNode(child, allowedTags);
+        for (const child of node.childNodes) inner += processNode(child, allowedTags, selfClosing);
         return '<' + tag + attrs + '>' + inner + '</' + tag + '>';
     }
 });
@@ -699,12 +756,84 @@ function insertTag(tagOpen, tagClose) {
     textarea.dispatchEvent(new Event('input'));
 }
 
+function insertAtCursor(text) {
+    const textarea = document.getElementById('msg-content');
+    const start = textarea.selectionStart;
+    textarea.value = textarea.value.substring(0, start) + text + textarea.value.substring(start);
+    textarea.focus();
+    textarea.setSelectionRange(start + text.length, start + text.length);
+    textarea.dispatchEvent(new Event('input'));
+}
+
 function insertLink() {
     const url = prompt('URL eingeben:', 'https://');
     if (url && url !== 'https://') {
         insertTag('<a href="' + url + '" target="_blank">', '</a>');
     }
 }
+
+function insertList(type) {
+    const textarea = document.getElementById('msg-content');
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const selected = textarea.value.substring(start, end);
+    let items;
+    if (selected.trim()) {
+        items = selected.split('\n').filter(l => l.trim()).map(l => '  <li>' + l.trim() + '</li>').join('\n');
+    } else {
+        items = '  <li>Punkt 1</li>\n  <li>Punkt 2</li>\n  <li>Punkt 3</li>';
+    }
+    const replacement = '<' + type + '>\n' + items + '\n</' + type + '>';
+    textarea.value = textarea.value.substring(0, start) + replacement + textarea.value.substring(end);
+    textarea.focus();
+    textarea.setSelectionRange(start, start + replacement.length);
+    textarea.dispatchEvent(new Event('input'));
+}
+
+function toggleEmojiPicker(e) {
+    e.stopPropagation();
+    const picker = document.getElementById('emoji-picker');
+    const tpl = document.getElementById('tpl-dropdown');
+    if (tpl) tpl.classList.remove('open');
+    picker.classList.toggle('open');
+}
+
+function insertEmoji(emoji) {
+    insertAtCursor(emoji);
+    document.getElementById('emoji-picker').classList.remove('open');
+}
+
+function toggleTemplates(e) {
+    e.stopPropagation();
+    const tpl = document.getElementById('tpl-dropdown');
+    const picker = document.getElementById('emoji-picker');
+    if (picker) picker.classList.remove('open');
+    tpl.classList.toggle('open');
+}
+
+function insertTemplate(key) {
+    const templates = {
+        'absent': '<h2>🚪 Abwesend</h2>\n<p>Ich bin bis <b>[Datum]</b> nicht im Büro.</p>\n<p>Bei dringenden Anliegen wenden Sie sich bitte an <b>[Vertretung]</b>.</p>',
+        'meeting': '<h2>📅 Im Meeting</h2>\n<p>Bin voraussichtlich bis <b>[Uhrzeit]</b> im Meeting.</p>\n<p>Danach wieder erreichbar.</p>',
+        'erreichbar': '<h2>☎️ Erreichbar</h2>\n<p>Ich bin telefonisch erreichbar unter:</p>\n<p><b>[Telefonnummer]</b></p>',
+        'pause': '<h2>☕ In der Pause</h2>\n<p>Bin kurz in der Pause. Bin in <b>[X Minuten]</b> zurück.</p>',
+        'homeoffice': '<h2>🏠 Homeoffice</h2>\n<p>Ich arbeite heute von zu Hause.</p>\n<p>Erreichbar per <b>[E-Mail / Telefon]</b>.</p>',
+        'urlaub': '<h2>🌴 Im Urlaub</h2>\n<p>Ich bin vom <b>[Datum]</b> bis <b>[Datum]</b> im Urlaub.</p>\n<p>Vertretung: <b>[Name]</b></p>'
+    };
+    const textarea = document.getElementById('msg-content');
+    textarea.value = templates[key] || '';
+    textarea.focus();
+    textarea.dispatchEvent(new Event('input'));
+    document.getElementById('tpl-dropdown').classList.remove('open');
+}
+
+// Dropdowns schließen bei Klick außerhalb
+document.addEventListener('click', function(e) {
+    const picker = document.getElementById('emoji-picker');
+    const tpl = document.getElementById('tpl-dropdown');
+    if (picker && !e.target.closest('.emoji-picker') && !e.target.closest('[onclick*="toggleEmoji"]')) picker.classList.remove('open');
+    if (tpl && !e.target.closest('.tpl-dropdown') && !e.target.closest('[onclick*="toggleTemplates"]')) tpl.classList.remove('open');
+});
 
 function openPreview(btn) {
     const content = btn.getAttribute('data-content');
