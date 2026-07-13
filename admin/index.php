@@ -265,7 +265,7 @@ $wochentageNames = [1=>'Mo', 2=>'Di', 3=>'Mi', 4=>'Do', 5=>'Fr', 6=>'Sa', 7=>'So
         .toolbar-btn:hover { border-color: var(--primary); color: var(--primary); }
         .toolbar-btn[title]::after { content: attr(title); position: absolute; bottom: calc(100% + 6px); left: 50%; transform: translateX(-50%); background: #1f2937; color: #fff; font-size: 0.68rem; font-weight: 500; padding: 0.25rem 0.5rem; border-radius: 4px; white-space: nowrap; opacity: 0; pointer-events: none; transition: opacity 0.15s; }
         .toolbar-btn:hover[title]::after { opacity: 1; }
-        .emoji-picker { position: absolute; top: calc(100% + 4px); left: 0; background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; padding: 0.75rem; box-shadow: 0 8px 24px rgba(0,0,0,0.15); z-index: 50; display: none; width: 280px; }
+        .emoji-picker { position: absolute; top: calc(100% + 4px); right: 0; background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; padding: 0.75rem; box-shadow: 0 8px 24px rgba(0,0,0,0.15); z-index: 50; display: none; width: max-content; }
         .emoji-picker.open { display: block; }
         .emoji-grid { display: grid; grid-template-columns: repeat(8, 1fr); gap: 0.25rem; }
         .emoji-grid button { background: none; border: none; font-size: 1.25rem; padding: 0.3rem; border-radius: 6px; cursor: pointer; transition: background 0.15s; line-height: 1; }
@@ -493,7 +493,7 @@ $wochentageNames = [1=>'Mo', 2=>'Di', 3=>'Mi', 4=>'Do', 5=>'Fr', 6=>'Sa', 7=>'So
                         <button type="button" class="toolbar-btn" onclick="toggleEmojiPicker(event)" title="Emoji">😊</button>
                         <div id="emoji-picker" class="emoji-picker">
                             <div class="emoji-grid">
-                                <?php foreach(['📢','📣','✅','❌','⚠️','ℹ️','❤️','👋','🎉','🔔','⏰','📍','☎️','📧','🏠','🔑','🚗','🛒','🍕','☕','🌟','⭐','💡','🔧','📝','📌'] as $e): ?>
+                                <?php foreach(['📢','📣','✅','❌','⚠️','ℹ️','❤️','👋','🎉','🔔','⏰','📍','☎️','📧','🏠','🔑','🚗','🛒','🍕','☕','🌟','⭐','💡','🔧'] as $e): ?>
                                     <button type="button" onclick="insertEmoji('<?= $e ?>')"><?= $e ?></button>
                                 <?php endforeach; ?>
                             </div>

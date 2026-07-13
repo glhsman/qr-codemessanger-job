@@ -110,6 +110,18 @@ $brandTitle = get_setting('brand_title') ?: 'Für dich';
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <title>Settings – QR Admin</title>
+    <?php
+    $fav = null;
+    foreach (['ico', 'png', 'jpg', 'svg'] as $ext) {
+        if (file_exists(__DIR__ . '/favicon/favicon.' . $ext)) {
+            $fav = 'favicon/favicon.' . $ext;
+            $mtime = filemtime(__DIR__ . '/favicon/favicon.' . $ext);
+            $type = ($ext === 'ico') ? 'x-icon' : $ext;
+            echo '<link rel="icon" type="image/' . $type . '" href="' . $fav . '?v=' . $mtime . '">';
+            break;
+        }
+    }
+    ?>
     <style>
         :root {
             --primary: #667eea;
