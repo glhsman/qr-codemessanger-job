@@ -45,30 +45,22 @@ header('Content-Type: text/html; charset=UTF-8');
     <h1>Impressum</h1>
 
     <h2>Angaben gemäß § 5 TMG</h2>
-    <p>[Name/Firma]</p>
-    <p>[Strasse und Hausnummer]</p>
-    <p>[PLZ Ort]</p>
-    <p>[Land]</p>
+    <p>Frank Schönbrodt</p>
+    <p>Hans-Böckler-Str.19</p>
+    <p>445324 Lünen</p>
+    <p>Germany</p>
 
     <h2>Vertreten durch</h2>
-    <p>[Vertretungsberechtigte Person]</p>
+    <p>Frank Schönbrodt</p>
 
     <h2>Kontakt</h2>
-    <p>Telefon: [Telefonnummer]</p>
-    <p>E-Mail: [E-Mail-Adresse]</p>
-
-    <h2>Umsatzsteuer-ID</h2>
-    <p>[Umsatzsteuer-Identifikationsnummer, falls vorhanden]</p>
+    <p>Telefon: +49 2306 8565865</p>
+    <p>E-Mail: info@schoenbrodt-ruehl.de</p>
 
     <h2>Verantwortlich für den Inhalt nach § 55 Abs. 2 RStV</h2>
-    <p>[Name]</p>
-    <p>[Anschrift]</p>
-
+    <p>siehe oben</p>
+  
     <p style="margin-top:1.5rem;"><a href="scan/index.php">Zurück zur Scan-Seite</a></p>
-
-    <div class="hint">
-      Bitte alle Platzhalter vor dem Produktivbetrieb mit den korrekten Pflichtangaben ersetzen.
-    </div>
   </main>
 </body>
 </html>

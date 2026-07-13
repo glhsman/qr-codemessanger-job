@@ -47,9 +47,9 @@ header('Content-Type: text/html; charset=UTF-8');
     <h1>Datenschutzerklärung</h1>
 
     <h2>1. Verantwortliche Stelle</h2>
-    <p>[Name/Firma]</p>
-    <p>[Anschrift]</p>
-    <p>E-Mail: [E-Mail-Adresse]</p>
+    <p>Frank Schönbrodt</p>
+    <p>44534 Lünen</p>
+    <p>E-Mail: info@schoenbrodt-ruehl.de</p>
 
     <h2>2. Zweck und Rechtsgrundlage der Verarbeitung</h2>
     <p>Diese Website zeigt Meldungen nach dem Scan eines QR-Codes an. Für die Analyse der Nutzung können Scan-Daten nur mit ausdrücklicher Einwilligung gespeichert werden.</p>
@@ -76,10 +76,6 @@ header('Content-Type: text/html; charset=UTF-8');
     <p>Sie haben insbesondere das Recht auf Auskunft, Berichtigung, Löschung, Einschränkung der Verarbeitung und Beschwerde bei einer Aufsichtsbehörde.</p>
 
     <p style="margin-top:1.5rem;"><a href="scan/index.php">Zurück zur Scan-Seite</a></p>
-
-    <div class="hint">
-      Bitte diese Vorlage rechtlich prüfen und die Platzhalter vor Produktivbetrieb vervollständigen.
-    </div>
   </main>
 </body>
 </html>

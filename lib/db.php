@@ -76,13 +76,13 @@ function ensure_schema(): void
 
 // --- Meldungs-Abfrage für die Scan-Seite ---
 
-function get_active_message(): string
+function get_active_message(): ?array
 {
     $pdo = get_pdo();
 
     // 1. Zeitgesteuerte Meldung: active_from <= NOW() <= active_until
     $stmt = $pdo->prepare(
-        "SELECT `content` FROM `messages`
+        "SELECT `content`, `created_at` FROM `messages`
          WHERE (`active_from` IS NULL OR `active_from` <= NOW())
            AND (`active_until` IS NULL OR `active_until` >= NOW())
            AND (
@@ -106,22 +106,22 @@ function get_active_message(): string
            )
            AND `is_default` = 0
            AND (`active_from` IS NOT NULL OR `daily_start` IS NOT NULL OR (`active_days` IS NOT NULL AND `active_days` != ''))
-         ORDER BY `active_from` DESC, `id` DESC
-         LIMIT 1"
+          ORDER BY `active_from` DESC, `id` DESC
+          LIMIT 1"
     );
     $stmt->execute();
     $row = $stmt->fetch();
     if ($row)
-        return $row['content'];
+        return $row;
 
     // 2. Standard-Meldung (is_default = 1)
-    $stmt = $pdo->query("SELECT `content` FROM `messages` WHERE `is_default` = 1 LIMIT 1");
+    $stmt = $pdo->query("SELECT `content`, `created_at` FROM `messages` WHERE `is_default` = 1 LIMIT 1");
     $row = $stmt->fetch();
     if ($row)
-        return $row['content'];
+        return $row;
 
     // 3. Hardcodierter Fallback
-    return 'Hallo! Hier ist deine Standard-Nachricht.';
+    return ['content' => 'Hallo! Hier ist deine Standard-Nachricht.', 'created_at' => null];
 }
 
 // --- CRUD für den Adminbereich ---
