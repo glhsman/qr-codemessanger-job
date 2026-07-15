@@ -82,7 +82,7 @@ function get_active_message(): ?array
 
     // 1. Zeitgesteuerte Meldung: active_from <= NOW() <= active_until
     $stmt = $pdo->prepare(
-        "SELECT `content`, `created_at` FROM `messages`
+        "SELECT `content`, `created_at`, `active_from`, `daily_start`, `daily_end` FROM `messages`
          WHERE (`active_from` IS NULL OR `active_from` <= NOW())
            AND (`active_until` IS NULL OR `active_until` >= NOW())
            AND (
@@ -115,13 +115,13 @@ function get_active_message(): ?array
         return $row;
 
     // 2. Standard-Meldung (is_default = 1)
-    $stmt = $pdo->query("SELECT `content`, `created_at` FROM `messages` WHERE `is_default` = 1 LIMIT 1");
+    $stmt = $pdo->query("SELECT `content`, `created_at`, `active_from`, `daily_start`, `daily_end` FROM `messages` WHERE `is_default` = 1 LIMIT 1");
     $row = $stmt->fetch();
     if ($row)
         return $row;
 
     // 3. Hardcodierter Fallback
-    return ['content' => 'Hallo! Hier ist deine Standard-Nachricht.', 'created_at' => null];
+    return ['content' => 'Hallo! Hier ist deine Standard-Nachricht.', 'created_at' => null, 'active_from' => null];
 }
 
 // --- CRUD für den Adminbereich ---

@@ -41,6 +41,43 @@ if ($hasIpConsent) {
 $msg = get_active_message();
 $msgContent = $msg['content'];
 $msgCreatedAt = $msg['created_at'] ?? null;
+$msgActiveFrom = $msg['active_from'] ?? null;
+$msgDailyStart = $msg['daily_start'] ?? null;
+$msgDailyEnd = $msg['daily_end'] ?? null;
+
+// Determine what timestamp and label to show
+$displayTime = null;
+$timeLabel = '';
+$activationCandidates = [];
+
+if (!empty($msgActiveFrom)) {
+    $activationCandidates[] = $msgActiveFrom;
+}
+
+if (!empty($msgDailyStart)) {
+    $now = new DateTime();
+    $start = new DateTime($now->format('Y-m-d') . ' ' . $msgDailyStart);
+    $end = !empty($msgDailyEnd) ? new DateTime($now->format('Y-m-d') . ' ' . $msgDailyEnd) : null;
+    
+    // Wenn start > end (geht über Mitternacht) und wir sind gerade NACH Mitternacht (vor end),
+    // dann war der Start GESTERN
+    if ($end && $start > $end && $now <= $end) {
+        $start->modify('-1 day');
+    }
+    
+    if ($start <= $now) {
+        $activationCandidates[] = $start->format('Y-m-d H:i:s');
+    }
+}
+
+if (!empty($activationCandidates)) {
+    // Nimm den aktuellsten Start-Zeitpunkt (am nächsten am Jetzt)
+    $displayTime = max($activationCandidates);
+    $timeLabel = 'Aktiv seit';
+} elseif (!empty($msgCreatedAt)) {
+    $displayTime = $msgCreatedAt;
+    $timeLabel = 'Erstellt am';
+}
 
 // Branding laden
 $brandTitle = get_setting('brand_title');
@@ -309,9 +346,9 @@ else {
 }
 ?>
       </div>
-      <?php if ($msgCreatedAt): ?>
+      <?php if ($displayTime): ?>
       <div style="text-align:center; margin-top:1rem; font-size:0.75rem; color:#bbb;">
-        Aktualisiert am <?= date('d.m.Y H:i', strtotime($msgCreatedAt)) ?> Uhr
+        <?= htmlspecialchars($timeLabel) ?> <?= date('d.m.Y H:i', strtotime($displayTime)) ?> Uhr
       </div>
       <?php endif; ?>
       <div class="legal-links">

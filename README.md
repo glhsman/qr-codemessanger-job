@@ -30,6 +30,7 @@ Alle Inhalte werden serverseitig durch einen Whitelist-basierten HTML-Sanitizer 
 - **Fav-Icon Upload**: Eigenes Browser-Tab-Icon hochladen (ico, png, jpg, svg).
 - **Logo Upload**: Logo für den Header der öffentlichen Scan-Seite hochladen (png, jpg, svg, webp). Wird lokal gespeichert.
 - **Branding-Titel**: Konfigurierbarer Titel auf der Scan-Seite (z.B. „Willkommen", „Für dich").
+- **Passwort ändern**: Bequeme Änderung des Admin-Passworts direkt über die Einstellungen.
 
 ### Dashboard
 - **Live-Vorschau** der aktuell öffentlich sichtbaren Meldung (Auto-Refresh alle 30 Sekunden).
@@ -78,11 +79,10 @@ Alle Inhalte werden serverseitig durch einen Whitelist-basierten HTML-Sanitizer 
    > [!NOTE]
    > Über die `credentials.json` lassen sich optional auch `ANONYMIZE_IP` (true/false) und `SESSION_COOKIE_SECURE` (true/false) steuern.
 3. **Passwort festlegen**:
-   - Rufen Sie im Browser `http://ihre-domain.de/admin/set_pass.php` auf.
-   - Geben Sie Ihr gewünschtes Admin-Passwort ein, um den Hash für die `credentials.json` zu generieren.
-   - Kopieren Sie den generierten Hash in Ihre `credentials.json` unter `ADMIN_PASS_HASH`.
-   - > [!WARNING]
-     > Löschen Sie die Datei `admin/set_pass.php` umgehend nach der Verwendung vom Server, um Sicherheitsrisiken zu vermeiden.
+   - Rufen Sie den Admin-Bereich unter `http://ihre-domain.de/admin` auf.
+   - Da noch kein Passwort hinterlegt ist, werden Sie automatisch zur "Ersten Einrichtung" weitergeleitet.
+   - Geben Sie dort Ihr gewünschtes Admin-Passwort ein. Es wird sicher gehasht und automatisch in Ihrer `credentials.json` gespeichert.
+   - Nach dem ersten Login können Sie das Passwort jederzeit bequem über die **Settings-Seite** im Admin-Bereich ändern.
 
 4. Importieren Sie das Datenbankschema (wird beim ersten Aufruf von `/scan` automatisch versucht zu erstellen).
 5. Konfigurieren Sie Ihren Webserver so, dass er auf das Hauptverzeichnis zeigt.

@@ -7,18 +7,43 @@ ensure_schema();
 
 session_start();
 $error = '';
+$setupMode = empty(ADMIN_PASS_HASH);
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $pw = $_POST['password'] ?? '';
-    if (!empty(ADMIN_PASS_HASH) && password_verify($pw, ADMIN_PASS_HASH)) {
-        session_regenerate_id(true);
-        $_SESSION['admin'] = true;
-        // CSRF token
-        $_SESSION['csrf_token'] = bin2hex(random_bytes(16));
-        header('Location: ' . BASE_URL . '/admin');
-        exit;
-    }
-    else {
-        $error = 'Ungültiges Passwort.';
+    if ($setupMode) {
+        // Ersten Passwort setzen
+        $pw = $_POST['password'] ?? '';
+        $pwConfirm = $_POST['password_confirm'] ?? '';
+
+        if (empty($pw)) {
+            $error = 'Passwort darf nicht leer sein.';
+        } elseif (strlen($pw) < 8) {
+            $error = 'Passwort muss mindestens 8 Zeichen lang sein.';
+        } elseif ($pw !== $pwConfirm) {
+            $error = 'Passwörter stimmen nicht überein.';
+        } else {
+            $creds = json_decode(file_get_contents(SECRETS_PATH), true);
+            $creds['ADMIN_PASS_HASH'] = password_hash($pw, PASSWORD_DEFAULT);
+            file_put_contents(SECRETS_PATH, json_encode($creds, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
+
+            session_regenerate_id(true);
+            $_SESSION['admin'] = true;
+            $_SESSION['csrf_token'] = bin2hex(random_bytes(16));
+            header('Location: ' . BASE_URL . '/admin');
+            exit;
+        }
+    } else {
+        // Normale Anmeldung
+        $pw = $_POST['password'] ?? '';
+        if (!empty(ADMIN_PASS_HASH) && password_verify($pw, ADMIN_PASS_HASH)) {
+            session_regenerate_id(true);
+            $_SESSION['admin'] = true;
+            $_SESSION['csrf_token'] = bin2hex(random_bytes(16));
+            header('Location: ' . BASE_URL . '/admin');
+            exit;
+        } else {
+            $error = 'Ungültiges Passwort.';
+        }
     }
 }
 ?>
@@ -27,7 +52,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
-    <title>Anmeldung – QR Admin</title>
+    <title><?= $setupMode ? 'Erstes Passwort setzen' : 'Anmeldung' ?> – QR Admin</title>
     <?php
     foreach (['ico', 'png', 'jpg', 'svg'] as $ext) {
         if (file_exists(__DIR__ . '/favicon/favicon.' . $ext)) {
@@ -88,22 +113,35 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             font-weight: 600;
             margin-bottom: 0.5rem;
         }
-        input[type=password] {
-            width: 100%;
-            padding: 0.75rem 1rem;
+        .pw-field-wrapper { position: relative; display: flex; align-items: center; margin-bottom: 1.5rem; }
+        .pw-field-wrapper input {
+            flex: 1;
+            padding: 0.75rem 3rem 0.75rem 1rem;
             border: 1px solid var(--border);
             border-radius: 10px;
             font-size: 1rem;
-            margin-bottom: 1.5rem;
             background: #f9fafb;
             transition: all 0.2s;
         }
-        input:focus {
+        .pw-field-wrapper input:focus {
             outline: none;
             border-color: var(--primary);
             background: #fff;
             box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
         }
+        .pw-toggle {
+            position: absolute;
+            right: 0.75rem;
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: var(--text-muted);
+            padding: 0.25rem;
+            display: flex;
+            align-items: center;
+            transition: color 0.2s;
+        }
+        .pw-toggle:hover { color: var(--primary); }
         button {
             width: 100%;
             padding: 0.75rem;
@@ -131,18 +169,53 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <body>
     <div class="login-card">
         <div class="logo">📣</div>
-        <h1>Willkommen zurück</h1>
-        <p class="subtitle">Bitte melde dich am Admin-Bereich an.</p>
+        <?php if ($setupMode): ?>
+            <h1>Erste Einrichtung</h1>
+            <p class="subtitle">Bitte setze ein Passwort für den Admin-Bereich (mind. 8 Zeichen).</p>
+        <?php else: ?>
+            <h1>Willkommen zurück</h1>
+            <p class="subtitle">Bitte melde dich am Admin-Bereich an.</p>
+        <?php endif; ?>
 
         <?php if ($error): ?>
             <div class="error">❌ <?= htmlspecialchars($error) ?></div>
         <?php endif; ?>
 
-        <form method="post">
-            <label for="password">Passwort</label>
-            <input type="password" name="password" id="password" required autofocus>
-            <button type="submit">Anmelden</button>
+        <form method="post" id="login-form">
+            <?php if ($setupMode): ?>
+                <label for="password">Passwort</label>
+                <div class="pw-field-wrapper">
+                    <input type="password" name="password" id="password" required minlength="8" autofocus>
+                    <button type="button" class="pw-toggle" onclick="togglePassword('password', this)" aria-label="Passwort anzeigen"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
+                </div>
+
+                <label for="password_confirm">Passwort bestätigen</label>
+                <div class="pw-field-wrapper">
+                    <input type="password" name="password_confirm" id="password_confirm" required minlength="8">
+                    <button type="button" class="pw-toggle" onclick="togglePassword('password_confirm', this)" aria-label="Passwort anzeigen"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
+                </div>
+            <?php else: ?>
+                <label for="password">Passwort</label>
+                <div class="pw-field-wrapper">
+                    <input type="password" name="password" id="password" required autofocus>
+                    <button type="button" class="pw-toggle" onclick="togglePassword('password', this)" aria-label="Passwort anzeigen"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
+                </div>
+            <?php endif; ?>
+            <button type="submit"><?= $setupMode ? 'Passwort setzen' : 'Anmelden' ?></button>
         </form>
     </div>
+
+    <script>
+    function togglePassword(inputId, btn) {
+        var input = document.getElementById(inputId);
+        if (input.type === 'password') {
+            input.type = 'text';
+            btn.classList.add('visible');
+        } else {
+            input.type = 'password';
+            btn.classList.remove('visible');
+        }
+    }
+    </script>
 </body>
 </html>

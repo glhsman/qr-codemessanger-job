@@ -102,7 +102,35 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['brand_title'])) {
     set_setting('brand_title', $bTitle ?: 'Für dich');
     $brandingSuccess = 'Titel wurde gespeichert.';
 }
-$brandTitle = get_setting('brand_title') ?: 'Für dich';
+$brandTitle = get_setting('brand_title') ?: 'Für deih';
+
+// --- Passwort ändern ---
+$passwordChangeMsg = '';
+$passwordChangeErr = '';
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['change_password'])) {
+    $currentPw = $_POST['current_password'] ?? '';
+    $newPw = $_POST['new_password'] ?? '';
+    $newPwConfirm = $_POST['new_password_confirm'] ?? '';
+
+    if (!password_verify($currentPw, ADMIN_PASS_HASH)) {
+        $passwordChangeErr = 'Aktuelles Passwort ist falsch.';
+    } elseif (empty($newPw)) {
+        $passwordChangeErr = 'Neues Passwort darf nicht leer sein.';
+    } elseif (strlen($newPw) < 8) {
+        $passwordChangeErr = 'Neues Passwort muss mindestens 8 Zeichen lang sein.';
+    } elseif ($newPw !== $newPwConfirm) {
+        $passwordChangeErr = 'Neue Passwörter stimmen nicht überein.';
+    } else {
+        $creds = json_decode(file_get_contents(SECRETS_PATH), true);
+        $creds['ADMIN_PASS_HASH'] = password_hash($newPw, PASSWORD_DEFAULT);
+        file_put_contents(SECRETS_PATH, json_encode($creds, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
+        $passwordChangeMsg = 'Passwort wurde erfolgreich geändert.';
+    }
+}
+
+// CSRF-Token für Settings-Formulare
+$settingsCsrf = $_SESSION['settings_csrf_token'] ?? bin2hex(random_bytes(16));
+$_SESSION['settings_csrf_token'] = $settingsCsrf;
 ?>
 <!doctype html>
 <html lang="de">
@@ -190,6 +218,12 @@ $brandTitle = get_setting('brand_title') ?: 'Für dich';
             background: #fff; color: #dc2626; border: 1px solid #fee2e2; padding: 0.5rem 1rem; border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 0.8rem; transition: all 0.2s;
         }
         .btn-delete:hover { background: #fef2f2; }
+
+        /* Password field wrapper */
+        .pw-field-wrapper { position: relative; display: flex; align-items: center; margin-bottom: 1.5rem; }
+        .pw-field-wrapper input { flex: 1; padding-right: 3rem; }
+        .pw-toggle { position: absolute; right: 0.75rem; background: none; border: none; cursor: pointer; color: var(--text-muted); padding: 0.25rem; display: flex; align-items: center; transition: color 0.2s; }
+        .pw-toggle:hover { color: var(--primary); }
 
         .current-media { margin-top: 2rem; padding-top: 2rem; border-top: 1px solid var(--border); display: flex; align-items: center; gap: 1.5rem; }
         .media-preview { width: 64px; height: 64px; background: #fff; border: 1px solid var(--border); border-radius: 12px; display: flex; align-items: center; justify-content: center; padding: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); flex-shrink: 0; }
@@ -300,7 +334,56 @@ $brandTitle = get_setting('brand_title') ?: 'Für dich';
                 <button class="btn-primary" type="submit">Titel speichern</button>
             </form>
         </div>
+
+        <!-- Passwort ändern -->
+        <div class="card">
+            <h2>🔒 Passwort ändern</h2>
+            <?php if ($passwordChangeMsg): ?><div class="msg">✅ <?= htmlspecialchars($passwordChangeMsg) ?></div><?php endif; ?>
+            <?php if ($passwordChangeErr): ?><div class="err">❌ <?= htmlspecialchars($passwordChangeErr) ?></div><?php endif; ?>
+
+            <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1.5rem; line-height: 1.6">
+                Geben Sie Ihr aktuelles Passwort ein und wählen Sie ein neues (mind. 8 Zeichen).
+            </p>
+
+            <form method="post" id="password-change-form">
+                <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($settingsCsrf) ?>">
+                <input type="hidden" name="change_password" value="1">
+
+                <label>Aktuelles Passwort</label>
+                <div class="pw-field-wrapper">
+                    <input type="password" name="current_password" id="pw-current" required minlength="8" style="margin-bottom:0">
+                    <button type="button" class="pw-toggle" onclick="togglePassword('pw-current', this)" aria-label="Passwort anzeigen"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
+                </div>
+
+                <label style="margin-top:1rem">Neues Passwort</label>
+                <div class="pw-field-wrapper">
+                    <input type="password" name="new_password" id="pw-new" required minlength="8" style="margin-bottom:0">
+                    <button type="button" class="pw-toggle" onclick="togglePassword('pw-new', this)" aria-label="Passwort anzeigen"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
+                </div>
+
+                <label>Neues Passwort bestätigen</label>
+                <div class="pw-field-wrapper">
+                    <input type="password" name="new_password_confirm" id="pw-new-confirm" required minlength="8" style="margin-bottom:0">
+                    <button type="button" class="pw-toggle" onclick="togglePassword('pw-new-confirm', this)" aria-label="Passwort anzeigen"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
+                </div>
+
+                <button class="btn-primary" type="submit">Passwort ändern</button>
+            </form>
+        </div>
     </main>
 </div>
+
+<script>
+function togglePassword(inputId, btn) {
+    var input = document.getElementById(inputId);
+    if (input.type === 'password') {
+        input.type = 'text';
+        btn.classList.add('visible');
+    } else {
+        input.type = 'password';
+        btn.classList.remove('visible');
+    }
+}
+</script>
 </body>
 </html>
