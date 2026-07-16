@@ -113,10 +113,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             font-weight: 600;
             margin-bottom: 0.5rem;
         }
-        .pw-field-wrapper { position: relative; display: flex; align-items: center; margin-bottom: 1.5rem; }
+        .pw-field-wrapper { position: relative; margin-bottom: 1.5rem; }
         .pw-field-wrapper input {
-            flex: 1;
-            padding: 0.75rem 3rem 0.75rem 1rem;
+            width: 100%;
+            padding: 0.75rem 2.5rem 0.75rem 0.75rem;
             border: 1px solid var(--border);
             border-radius: 10px;
             font-size: 1rem;
@@ -131,15 +131,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
         .pw-toggle {
             position: absolute;
-            right: 0.75rem;
+            right: 0.5rem;
+            top: 50%;
+            transform: translateY(-50%);
             background: none;
             border: none;
             cursor: pointer;
-            color: var(--text-muted);
+            color: #6b7280;
             padding: 0.25rem;
             display: flex;
             align-items: center;
+            justify-content: center;
             transition: color 0.2s;
+            z-index: 1;
         }
         .pw-toggle:hover { color: var(--primary); }
         button {
