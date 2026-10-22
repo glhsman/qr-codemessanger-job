@@ -161,6 +161,8 @@ $_SESSION['settings_csrf_token'] = $settingsCsrf;
             --text-main: #1f2937;
             --text-muted: #6b7280;
             --border: #e5e7eb;
+            --bg-input: #f9fafb;
+            color-scheme: light;
         }
 
         @media (prefers-color-scheme: dark) {
@@ -174,9 +176,13 @@ $_SESSION['settings_csrf_token'] = $settingsCsrf;
                 --text-main: #f1f5f9;
                 --text-muted: #94a3b8;
                 --border: #334155;
+                --bg-input: #0f172a;
+                color-scheme: dark;
             }
-            input[type=file] { background: #0f172a; color: var(--text-main); }
-            .btn-delete { background: #1e293b; }
+            .msg { background: rgba(16,185,129,0.12); color: #6ee7b7; border-color: #065f46; }
+            .err { background: rgba(239,68,68,0.12); color: #fca5a5; border-color: #7f1d1d; }
+            .btn-delete { background: var(--bg-card); color: #f87171; border-color: #7f1d1d; }
+            .btn-delete:hover { background: rgba(248,113,113,0.12); }
         }
 
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -209,7 +215,7 @@ $_SESSION['settings_csrf_token'] = $settingsCsrf;
         .err { background: #fef2f2; color: #991b1b; padding: 1rem; border-radius: 10px; margin-bottom: 1.5rem; font-size: 0.85rem; border: 1px solid #fee2e2; }
 
         label { display: block; font-size: 0.875rem; font-weight: 600; margin-bottom: 0.75rem; color: var(--text-main); }
-        input[type=file] { width: 100%; padding: 0.75rem; border: 1px solid var(--border); border-radius: 10px; background: #f9fafb; margin-bottom: 1.5rem; }
+        input[type=file] { width: 100%; padding: 0.75rem; border: 1px solid var(--border); border-radius: 10px; background: var(--bg-input); color: var(--text-main); margin-bottom: 1.5rem; }
         .btn-primary {
             background: linear-gradient(135deg, var(--primary), var(--secondary)); color: #fff; border: none; padding: 0.75rem 1.5rem; border-radius: 10px; font-weight: 700; cursor: pointer; transition: opacity 0.2s; font-size: 0.875rem;
         }

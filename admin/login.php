@@ -70,6 +70,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             --bg-body: #f3f4f6;
             --text-main: #1f2937;
             --border: #e5e7eb;
+            --bg-card: #fff;
+            --bg-input: #f9fafb;
+            --text-muted: #6b7280;
+            color-scheme: light;
+        }
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --primary: #818cf8;
+                --secondary: #a78bfa;
+                --bg-body: #0f172a;
+                --bg-card: #1e293b;
+                --bg-input: #0f172a;
+                --text-main: #f1f5f9;
+                --text-muted: #94a3b8;
+                --border: #334155;
+                color-scheme: dark;
+            }
+            .error { background: rgba(239,68,68,0.12); color: #fca5a5; border-color: #7f1d1d; }
         }
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body {
@@ -83,7 +101,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             padding: 1rem;
         }
         .login-card {
-            background: #fff;
+            background: var(--bg-card);
             padding: 2.5rem;
             border-radius: 20px;
             box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1);
@@ -103,7 +121,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
         p.subtitle {
             font-size: 0.875rem;
-            color: #6b7280;
+            color: var(--text-muted);
             margin-bottom: 2rem;
         }
         form { text-align: left; }
@@ -120,13 +138,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             border: 1px solid var(--border);
             border-radius: 10px;
             font-size: 1rem;
-            background: #f9fafb;
+            background: var(--bg-input);
+            color: var(--text-main);
             transition: all 0.2s;
         }
         .pw-field-wrapper input:focus {
             outline: none;
             border-color: var(--primary);
-            background: #fff;
+            background: var(--bg-card);
             box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
         }
         .pw-toggle {
@@ -138,7 +157,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             background: none;
             border: none;
             cursor: pointer;
-            color: #6b7280;
+            color: var(--text-muted);
             padding: 0.25rem;
             display: flex;
             align-items: center;
